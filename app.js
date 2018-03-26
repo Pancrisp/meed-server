@@ -13,8 +13,14 @@ const app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
-
 app.use(morgan('dev'))
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+})
 
 // Routes to handle requests, these are our API endpoints
 app.use('/users', userRoutes)
