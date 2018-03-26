@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
+const morgan = require('morgan')
 
 const userRoutes = require('./api/routes/user')
 
@@ -13,6 +14,7 @@ const app = express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
+app.use(morgan('dev'))
 
 // Routes to handle requests, these are our API endpoints
 app.use('/users', userRoutes)
