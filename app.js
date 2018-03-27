@@ -32,7 +32,6 @@ app.use((req, res, next) => {
   next();
 })
 
-
 // Routes to handle requests, these are our API endpoints
 app.use('/users', userRoutes)
 
