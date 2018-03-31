@@ -11,7 +11,7 @@ exports.signup = (req, res, next) => {
     .then(user => {
       if (user.length >= 1) {
         return res.status(409).json({
-          message: "An account with this email already exists."
+          message: 'An account with this email already exists.'
         })
       } else {
         // hash passwords and create new user
@@ -29,19 +29,19 @@ exports.signup = (req, res, next) => {
               password: hash
             })
             user.save()
-            .then(result => {
-              console.log(result)
-              res.status(201).json({
-                message: 'User successfully created',
-                user: user
+              .then(result => {
+                console.log(result)
+                res.status(201).json({
+                  message: 'User successfully created',
+                  user: user
+                })
               })
-            })
-            .catch(err => {
-              console.log(err)
-              res.status(500).json({
-                error: err
+              .catch(err => {
+                console.log(err)
+                res.status(500).json({
+                  error: err
+                })
               })
-            })
           }
         })
       }
@@ -57,11 +57,11 @@ exports.delete = (req, res, next) => {
     .exec()
     .then(result => {
       res.status(200).json({
-        message: "User successfully deleted"
+        message: 'User successfully deleted'
       })
     })
     .catch(err => {
-      console.log(err);
+      console.log(err)
       res.status(500).json({
         error: err
       })
