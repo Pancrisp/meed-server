@@ -1,16 +1,14 @@
 # meed-server
 This is the backend API server for MEED
 
-## Installation
+## Development
 Before starting the server, install project dependencies by running:
 ``` bash
 $ npm install
 ```
-
-## Development
 To start server, run:
 ``` bash
-$ npm start
+$ npm start # server at http://localhost:5000
 ```
 **Nodemon** listens for changes and restarts the server when necessary.
 
