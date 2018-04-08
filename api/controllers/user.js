@@ -69,17 +69,17 @@ exports.delete = (req, res, next) => {
 }
 
 exports.viewAll = (req, res, next) => {
-    User.find().exec(function (err, users) {
-        if (err) return console.error(err);
-        res.json(users)
-    })
+  User.find().exec(function (err, users) {
+    if (err) return console.error(err);
+    res.json(users)
+  })
 }
 
 exports.view = (req, res, next) => {
-    User.findById(req.params.userId).exec(function (err, user) {
-        if (err) return console.error(err);
-        res.json(user)
-    })
+  User.findById(req.params.userId).exec(function (err, user) {
+    if (err) return console.error(err);
+    res.json(user)
+  })
 }
 
 // exports.update = (req, res, next) => {
@@ -89,3 +89,5 @@ exports.view = (req, res, next) => {
 // exports.login = (req, res, next) => {
 
 // }
+
+// vi: sw=2

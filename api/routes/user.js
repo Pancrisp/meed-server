@@ -13,3 +13,5 @@ router.get('/:userId', UserController.view)
 // router.get('/', UserController.login)
 
 module.exports = router
+
+// vi: sw=2
