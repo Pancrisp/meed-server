@@ -5,7 +5,8 @@ exports.createAccount = (req, res, next) => {
   const account = new Account({
     _id: new mongoose.Types.ObjectId(),
     balance: req.body.balance,
-    networth: req.body.networth
+    networth: req.body.networth,
+    user: req.body.user
   })
   account.save()
   .then(result => {

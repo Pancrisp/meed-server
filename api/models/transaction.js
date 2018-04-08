@@ -7,10 +7,6 @@ const TransactionSchema = new Schema({
   quantity: {type: Number},
   price: {type: Number},
   action: {type: String}
-  // user: type: mongoose.Schema.Types.ObjectId, ref: 'User'
-    // transactions: [
-    //   type:{type: mongoose.Schema.Types.ObjectId, ref: 'Transaction'}
-    // ]
 })
 
 module.exports = mongoose.model('Transactions', TransactionSchema)
