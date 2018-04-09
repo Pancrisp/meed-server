@@ -76,35 +76,35 @@ exports.delete = (req, res, next) => {
 }
 
 exports.viewAll = (req, res, next) => {
-  User.find().exec(function (err, users) {
+  User.find().exec((err, users) => {
     if (err) return error(err, res)
-    res.send(users)
+    res.json(users)
   })
 }
 
 exports.view = (req, res, next) => {
-  User.findById(req.params.userId).exec(function (err, user) {
+  User.findById(req.params.userId).exec((err, user) => {
     if (err) return error(err, res)
-    res.send(user)
+    res.json(user)
   })
 }
 
 exports.update = (req, res, next) => {
-  User.findById(req.body._id).exec(function (err, user) {
+  User.findById(req.body._id).exec((err, user) => {
     if (err) return error(err, res)
     user.name = req.body.name
     user.email = req.body.email
     user.password = req.body.password
-    user.save(function (err, updatedUser) {
+    user.save((err, updatedUser) => {
       if (err) return error(err, res)
-      res.send(updatedUser)
+      res.json(updatedUser)
     })
   })
 }
 
 exports.login = (req, res, next) => {
   User.findOne({email: req.body.email})
-    .exec(function (err, user) {
+    .exec((err, user) => {
       if (err) return error(err, res)
       bcrypt.compare(req.body.password, user.password, (err, matched) => {
         if (matched) {
