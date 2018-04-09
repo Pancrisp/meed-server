@@ -5,6 +5,8 @@ const morgan = require('morgan')
 const env = require('dotenv').config()
 
 const userRoutes = require('./api/routes/user')
+const accountRoutes = require('./api/routes/account')
+const transactionRoutes = require('./api/routes/transaction')
 
 mongoose.Promise = global.Promise
 // Connect to mLab database server
@@ -32,6 +34,8 @@ app.use((req, res, next) => {
 
 // Routes to handle requests, these are our API endpoints
 app.use('/users', userRoutes)
+app.use('/accounts', accountRoutes)
+app.use('/transactions', transactionRoutes)
 
 // TO BE REMOVED
 // Temporary handler to indicate endpoint is working
