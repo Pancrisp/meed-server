@@ -7,6 +7,7 @@ const env = require('dotenv').config()
 const userRoutes = require('./api/routes/user')
 const accountRoutes = require('./api/routes/account')
 const transactionRoutes = require('./api/routes/transaction')
+const priceRoutes = require('./api/routes/price')
 
 mongoose.Promise = global.Promise
 // Connect to mLab database server
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
 app.use('/users', userRoutes)
 app.use('/accounts', accountRoutes)
 app.use('/transactions', transactionRoutes)
+app.use('/prices', priceRoutes)
 
 // TO BE REMOVED
 // Temporary handler to indicate endpoint is working

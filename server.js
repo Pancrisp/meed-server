@@ -7,7 +7,7 @@ const fs = require('fs');
 const port = process.env.PORT || 5000;
 const server = http.createServer(app);
 
-const SharePrice = require('./api/models/sharePrice');
+const Price = require('./api/models/price');
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
 var symbols = [];
@@ -56,28 +56,28 @@ function fetchPrices(symbols, index = 0) {
       if (!res.data) {
         throw "No data in response!";
       }
-      const price = res.data['Time Series (Daily)'][datestr]['1. open'];
+      const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
       now = new Date();
-      SharePrice.findOne({symbol: symbol}, (err, sharePrice) => {
+      Price.findOne({symbol: symbol}, (err, price) => {
         if (err) throw err;
-        if (sharePrice) {
-          if (sharePrice.price == price) {
-            console.log('No change to price ' + symbol + ' ' + price);
+        if (price) {
+          if (price.price == newPrice) {
+            console.log('No change to price ' + symbol + ' ' + newPrice);
           } else {
-            sharePrice.price = price;
-            sharePrice.date = now;
-            sharePrice.save();
-            console.log('Updated price ' + symbol + ' ' + price);
+            price.price = newPrice;
+            price.date = now;
+            price.save();
+            console.log('Updated price ' + symbol + ' ' + newPrice);
           }
         } else {
-          sharePrice = new SharePrice({
+          price = new Price({
             _id: new mongoose.Types.ObjectId(),
             symbol: symbol,
-            price: price,
+            price: newPrice,
             date: now
           });
-          sharePrice.save();
-          console.log('Added new price ' + symbol + ' ' + price);
+          price.save();
+          console.log('Added new price ' + symbol + ' ' + newPrice);
         }
         if (index + 1 == symbols.length) {
           const elapsedTime = (Date.now() - startFetch) / 1000;
