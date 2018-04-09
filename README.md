@@ -2,10 +2,19 @@
 This is the backend API server for MEED
 
 ## Development
-Before starting the server, install project dependencies by running:
+After cloning the repository, install project dependencies by running:
 ``` bash
 $ npm install
 ```
+
+**Configuring environment variables**
+
+Create a copy of `.env.example` and rename it to `.env` and fill in the username and password fields with the database credentials.
+```
+MLAB_USER={username}
+MLAB_PASS={password}
+```
+
 To start server, run:
 ``` bash
 $ npm start # server at http://localhost:5000
