@@ -9,6 +9,7 @@ const userRoutes = require('./api/routes/user')
 mongoose.Promise = global.Promise
 // Connect to mLab database server
 mongoose.connect(`mongodb://${process.env.MLAB_USER}:${process.env.MLAB_PASS}@ds123619.mlab.com:23619/meed`)
+//mongoose.connect(`mongodb://localhost/meed`)
 
 const app = express()
 
@@ -56,3 +57,5 @@ app.use((error, req, res, next) => {
 })
 
 module.exports = app
+
+// vi: sw=2
