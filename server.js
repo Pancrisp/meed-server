@@ -19,14 +19,6 @@ lines.forEach((line) => {
 });
 console.log('Loaded ' + symbols.length + ' symbols.');
 
-function pad2digits(num) {
-  if (num < 10) {
-    return '0' + num;
-  } else {
-    return num;
-  }
-}
-
 var now = new Date();
 const year = now.getFullYear();
 const month = pad2digits(now.getMonth() + 1);
@@ -36,16 +28,24 @@ console.log('Today is ' + datestr);
 
 const apikey = '6GOVBYU35WIUMU2X';
 
+// Start listening
+server.listen(port);
+console.log('API server started on port ' + port);
 // Recursively fetch the prices
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
 const startFetch = Date.now()
-fetchPrices(0);
-// Start listening
-server.listen(port);
-console.log('API server started on port ' + port);
+fetchPrices(symbols);
 
-function fetchPrices(index) {
+function pad2digits(num) {
+  if (num < 10) {
+    return '0' + num;
+  } else {
+    return num;
+  }
+}
+
+function fetchPrices(symbols, index = 0) {
   symbol = symbols[index];
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_DAILY&symbol='
@@ -84,7 +84,7 @@ function fetchPrices(index) {
           console.log('All ' + (index + 1) + ' prices fetched in '
             + elapsedTime + ' seconds.');
         } else {
-          fetchPrices(index + 1);
+          fetchPrices(symbols, index + 1);
         }
       });
     })
