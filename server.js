@@ -27,18 +27,19 @@ function pad2digits(num) {
   }
 }
 
-const now = new Date();
+var now = new Date();
 const year = now.getFullYear();
 const month = pad2digits(now.getMonth() + 1);
 const day = pad2digits(now.getDate());
 const datestr = year + '-' + month + '-' + day;
-console.log('Today: ' + datestr);
+console.log('Today is ' + datestr);
 
 const apikey = '6GOVBYU35WIUMU2X';
 
 // Recursively fetch the prices
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
+const startFetch = Date.now()
 fetchPrices(0);
 // Start listening
 server.listen(port);
@@ -56,12 +57,18 @@ function fetchPrices(index) {
         throw "No data in response!";
       }
       const price = res.data['Time Series (Daily)'][datestr]['1. open'];
+      now = new Date();
       SharePrice.findOne({symbol: symbol}, (err, sharePrice) => {
         if (err) throw err;
         if (sharePrice) {
-          sharePrice.price = price;
-          sharePrice.date = now;
-          console.log('Updated price ' + symbol + ' ' + price);
+          if (sharePrice.price == price) {
+            console.log('No change to price ' + symbol + ' ' + price);
+          } else {
+            sharePrice.price = price;
+            sharePrice.date = now;
+            sharePrice.save();
+            console.log('Updated price ' + symbol + ' ' + price);
+          }
         } else {
           sharePrice = new SharePrice({
             _id: new mongoose.Types.ObjectId(),
@@ -69,11 +76,13 @@ function fetchPrices(index) {
             price: price,
             date: now
           });
+          sharePrice.save();
           console.log('Added new price ' + symbol + ' ' + price);
         }
-        sharePrice.save();
         if (index + 1 == symbols.length) {
-          console.log('All ' + (index + 1) + ' prices fetched.');
+          const elapsedTime = (Date.now() - startFetch) / 1000;
+          console.log('All ' + (index + 1) + ' prices fetched in '
+            + elapsedTime + ' seconds.');
         } else {
           fetchPrices(index + 1);
         }
