@@ -62,6 +62,8 @@ exports.buy = (req, res, next) => {
       });
     }
     account.balance -= value;
+    //update networth
+    account.networth += (account.balance + value);
     // If we already have shares in this symbol
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].symbol == req.body.symbol) {
