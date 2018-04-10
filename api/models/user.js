@@ -11,7 +11,10 @@ const UserSchema = new Schema({
     // validation
     // match: [some crazy regex]
   },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  accounts: [{type: Schema.Types.ObjectId, ref: 'Accounts'}]
 })
 
 module.exports = mongoose.model('Users', UserSchema)
+
+// vi: sw=2

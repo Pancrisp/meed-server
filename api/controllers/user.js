@@ -4,6 +4,13 @@ const passport = require('passport')
 
 const User = require('../models/user')
 
+function error(err, res) {
+  console.log(err)
+  return res.status(500).json({
+    error: err
+  })
+}
+
 exports.signup = (req, res, next) => {
   // prevents users from signing up with the same email
   User.find({ email: req.body.email })
@@ -68,14 +75,47 @@ exports.delete = (req, res, next) => {
     })
 }
 
-// exports.viewAll = (req, res, next) => {
+exports.viewAll = (req, res, next) => {
+  User.find().exec((err, users) => {
+    if (err) return error(err, res)
+    res.json(users)
+  })
+}
 
-// }
+exports.view = (req, res, next) => {
+  User.findById(req.params.userId).exec((err, user) => {
+    if (err) return error(err, res)
+    res.json(user)
+  })
+}
 
-// exports.view = (req, res, next) => {
+exports.update = (req, res, next) => {
+  User.findById(req.body._id).exec((err, user) => {
+    if (err) return error(err, res)
+    user.name = req.body.name
+    user.email = req.body.email
+    user.password = req.body.password
+    user.save((err, updatedUser) => {
+      if (err) return error(err, res)
+      res.json(updatedUser)
+    })
+  })
+}
 
-// }
+exports.login = (req, res, next) => {
+  User.findOne({email: req.body.email})
+    .exec((err, user) => {
+      if (err) return error(err, res)
+      bcrypt.compare(req.body.password, user.password, (err, matched) => {
+        if (matched) {
+          res.json(user)
+        } else {
+          res.status(404).json({
+            message: "Incorrect password"
+          })
+        }
+      })
+    })
+}
 
-// exports.update = (req, res, next) => {
-
-// }
+// vi: sw=2

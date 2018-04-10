@@ -5,10 +5,14 @@ const morgan = require('morgan')
 const env = require('dotenv').config()
 
 const userRoutes = require('./api/routes/user')
+const accountRoutes = require('./api/routes/account')
+const transactionRoutes = require('./api/routes/transaction')
+const priceRoutes = require('./api/routes/price')
 
 mongoose.Promise = global.Promise
 // Connect to mLab database server
 mongoose.connect(`mongodb://${process.env.MLAB_USER}:${process.env.MLAB_PASS}@ds123619.mlab.com:23619/meed`)
+//mongoose.connect(`mongodb://localhost/meed`)
 
 const app = express()
 
@@ -31,6 +35,9 @@ app.use((req, res, next) => {
 
 // Routes to handle requests, these are our API endpoints
 app.use('/users', userRoutes)
+app.use('/accounts', accountRoutes)
+app.use('/transactions', transactionRoutes)
+app.use('/prices', priceRoutes)
 
 // TO BE REMOVED
 // Temporary handler to indicate endpoint is working
@@ -56,3 +63,5 @@ app.use((error, req, res, next) => {
 })
 
 module.exports = app
+
+// vi: sw=2
