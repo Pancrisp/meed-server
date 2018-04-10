@@ -135,7 +135,12 @@ exports.sell = (req, res, next) => {
 
 exports.view = (req, res, next) => {
   Account.findById(req.params.accountId).exec((err, account) => {
-    if (err) return error(err, res)
+    //if (err) return error(err, res)
+    if(!account) {
+      return res.json({
+        message: 'No account by that ID'
+      })
+    }
     res.json(account)
   })
 }
