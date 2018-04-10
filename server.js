@@ -20,11 +20,11 @@ lines.forEach((line) => {
 console.log('Loaded ' + symbols.length + ' symbols.');
 
 var now = new Date();
-// const year = now.getFullYear();
-// const month = pad2digits(now.getMonth() + 1);
-// const day = pad2digits(now.getDate());
-// const datestr = year + '-' + month + '-' + day;
-// console.log('Today is ' + datestr);
+const year = now.getFullYear();
+const month = pad2digits(now.getMonth() + 1);
+const day = pad2digits(now.getDate());
+const datestr = year + '-' + month + '-' + day;
+console.log('Today is ' + datestr);
 
 const apikey = '6GOVBYU35WIUMU2X';
 
@@ -35,62 +35,62 @@ console.log('API server started on port ' + port);
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
 const startFetch = Date.now()
-// fetchPrices(symbols);
-//
-// function pad2digits(num) {
-//   if (num < 10) {
-//     return '0' + num;
-//   } else {
-//     return num;
-//   }
-// }
-//
-// function fetchPrices(symbols, index = 0) {
-//   symbol = symbols[index];
-//   const url = 'https://www.alphavantage.co/'
-//     + 'query?function=TIME_SERIES_DAILY&symbol='
-//     + symbol + '.AX&apikey=' + apikey;
-//
-//   axios.get(url)
-//     .then((res) => {
-//       if (!res.data) {
-//         throw "No data in response!";
-//       }
-//       const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
-//       now = new Date();
-//       Price.findOne({symbol: symbol}, (err, price) => {
-//         if (err) throw err;
-//         if (price) {
-//           if (price.price == newPrice) {
-//             console.log('No change to price ' + symbol + ' ' + newPrice);
-//           } else {
-//             price.price = newPrice;
-//             price.date = now;
-//             price.save();
-//             console.log('Updated price ' + symbol + ' ' + newPrice);
-//           }
-//         } else {
-//           price = new Price({
-//             _id: new mongoose.Types.ObjectId(),
-//             symbol: symbol,
-//             price: newPrice,
-//             date: now
-//           });
-//           price.save();
-//           console.log('Added new price ' + symbol + ' ' + newPrice);
-//         }
-//         if (index + 1 == symbols.length) {
-//           const elapsedTime = (Date.now() - startFetch) / 1000;
-//           console.log('All ' + (index + 1) + ' prices fetched in '
-//             + elapsedTime + ' seconds.');
-//         } else {
-//           fetchPrices(symbols, index + 1);
-//         }
-//       });
-//     })
-//     .catch((err) => {
-//       console.log(err);
-//     });
-// }
+fetchPrices(symbols);
+
+function pad2digits(num) {
+  if (num < 10) {
+    return '0' + num;
+  } else {
+    return num;
+  }
+}
+
+function fetchPrices(symbols, index = 0) {
+  symbol = symbols[index];
+  const url = 'https://www.alphavantage.co/'
+    + 'query?function=TIME_SERIES_DAILY&symbol='
+    + symbol + '.AX&apikey=' + apikey;
+
+  axios.get(url)
+    .then((res) => {
+      if (!res.data) {
+        throw "No data in response!";
+      }
+      const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
+      now = new Date();
+      Price.findOne({symbol: symbol}, (err, price) => {
+        if (err) throw err;
+        if (price) {
+          if (price.price == newPrice) {
+            console.log('No change to price ' + symbol + ' ' + newPrice);
+          } else {
+            price.price = newPrice;
+            price.date = now;
+            price.save();
+            console.log('Updated price ' + symbol + ' ' + newPrice);
+          }
+        } else {
+          price = new Price({
+            _id: new mongoose.Types.ObjectId(),
+            symbol: symbol,
+            price: newPrice,
+            date: now
+          });
+          price.save();
+          console.log('Added new price ' + symbol + ' ' + newPrice);
+        }
+        if (index + 1 == symbols.length) {
+          const elapsedTime = (Date.now() - startFetch) / 1000;
+          console.log('All ' + (index + 1) + ' prices fetched in '
+            + elapsedTime + ' seconds.');
+        } else {
+          fetchPrices(symbols, index + 1);
+        }
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
 
 // vi: sw=2
