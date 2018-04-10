@@ -7,7 +7,7 @@ const AccountSchema = new Schema({
   networth: {type: Number},
   user: {type: mongoose.Schema.Types.ObjectId, ref: 'Users'},
   transactions: [{type: mongoose.Schema.Types.ObjectId, ref: 'Transactions'}],
-  shareHoldings: [{type: Schema.Types.ObjectId, ref: 'ShareHolding'}]
+  shares: [{symbol: String, quantity: Number}]
 })
 
 module.exports = mongoose.model('Accounts', AccountSchema)
