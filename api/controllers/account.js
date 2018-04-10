@@ -49,7 +49,7 @@ exports.buy = (req, res, next) => {
       });
     }
     value = price.price * req.body.quantity;
-  }
+  });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {
       return res.json({
@@ -102,7 +102,7 @@ exports.sell = (req, res, next) => {
       });
     }
     value = price.price * req.body.quantity;
-  }
+  });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {
       return res.json({
