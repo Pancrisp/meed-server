@@ -12,13 +12,20 @@ function error(err, res) {
 }
 
 exports.signup = (req, res, next) => {
+  if (!req.body.name
+    || !req.body.email
+    || !req.body.password) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
   // prevents users from signing up with the same email
   User.find({ email: req.body.email })
     .exec()
     .then(user => {
       if (user.length >= 1) {
         return res.status(409).json({
-          message: "An account with this email already exists."
+          message: 'An account with this email already exists.'
         })
       } else {
         // hash passwords and create new user
@@ -56,6 +63,11 @@ exports.signup = (req, res, next) => {
 }
 
 exports.login = (req, res, next) => {
+  if (!req.body.email) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
   User.find({ email: req.body.email })
 }
 
@@ -64,7 +76,7 @@ exports.delete = (req, res, next) => {
     .exec()
     .then(result => {
       res.status(200).json({
-        message: "User successfully deleted"
+        message: 'User successfully deleted'
       })
     })
     .catch(err => {
@@ -90,6 +102,14 @@ exports.view = (req, res, next) => {
 }
 
 exports.update = (req, res, next) => {
+  if (!req.body._id
+    || !req.body.name
+    || !req.body.email
+    || !req.body.password) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
   User.findById(req.body._id).exec((err, user) => {
     if (err) return error(err, res)
     user.name = req.body.name
@@ -111,7 +131,7 @@ exports.login = (req, res, next) => {
           res.json(user)
         } else {
           res.status(404).json({
-            message: "Incorrect password"
+            message: 'Incorrect password'
           })
         }
       })

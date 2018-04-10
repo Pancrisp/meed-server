@@ -1,8 +1,14 @@
 const mongoose = require('mongoose')
 const Account = require('../models/account')
 const User = require('../models/user')
+const Price = require('../models/price')
 
 exports.createAccount = (req, res, next) => {
+  if (!req.body.userId) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
   User.findById(req.body.userId).exec((err, user) => {
     const account = new Account({
       _id: new mongoose.Types.ObjectId(),
@@ -28,7 +34,34 @@ exports.createAccount = (req, res, next) => {
 }
 
 exports.buy = (req, res, next) => {
+  if (!req.body.accountId
+    || !req.body.symbol
+    || !req.body.quantity) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
+  var value = 0;
+  Price.findOne({symbol: req.body.symbol}).exec((err, price) => {
+    if (!price) {
+      return res.json({
+        message: 'Unrecognised symbol'
+      });
+    }
+    value = price.price * req.body.quantity;
+  }
   Account.findById(req.body.accountId).exec((err, account) => {
+    if (!account) {
+      return res.json({
+        message: 'No account by that ID'
+      });
+    }
+    if (account.balance < value) {
+      return res.json({
+        message: 'Insufficient funds'
+      });
+    }
+    account.balance -= value;
     // If we already have shares in this symbol
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].symbol == req.body.symbol) {
@@ -54,7 +87,28 @@ exports.buy = (req, res, next) => {
 }
 
 exports.sell = (req, res, next) => {
+  if (!req.body.accountId
+    || !req.body.symbol
+    || !req.body.quantity) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
+  var value = 0;
+  Price.findOne({symbol: req.body.symbol}).exec((err, price) => {
+    if (!price) {
+      return res.json({
+        message: 'Unrecognised symbol'
+      });
+    }
+    value = price.price * req.body.quantity;
+  }
   Account.findById(req.body.accountId).exec((err, account) => {
+    if (!account) {
+      return res.json({
+        message: 'No account by that ID'
+      });
+    }
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].symbol == req.body.symbol) {
         if (account.shares[i].quantity < req.body.quantity) {
@@ -63,6 +117,7 @@ exports.sell = (req, res, next) => {
           });
         }
         account.shares[i].quantity -= req.body.quantity;
+        account.balance += value;
         account.save();
         return res.json({
           message: 'Shares sold.',

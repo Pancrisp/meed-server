@@ -2,6 +2,14 @@ const mongoose = require('mongoose')
 const Transaction = require('../models/transaction')
 
 exports.createAccount = (req, res, next) => {
+  if (!req.body.share
+    || !req.body.quantity
+    || !req.body.price
+    || !req.body.action) {
+    return res.json({
+      message: 'Bad request'
+    });
+  }
   const account = new Transaction({
     _id: new mongoose.Types.ObjectId(),
     share: req.body.share,
