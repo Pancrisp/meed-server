@@ -131,3 +131,11 @@ exports.sell = (req, res, next) => {
   });
 }
 
+exports.view = (req, res, next) => {
+  Account.findById(req.params.accountId).exec((err, account) => {
+    if (err) return error(err, res)
+    res.json(account)
+  })
+}
+
+//when buy shares update networth

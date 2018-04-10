@@ -5,5 +5,6 @@ const AccountController = require('../controllers/account')
 router.post('/', AccountController.createAccount)
 router.post('/buy', AccountController.buy)
 router.post('/sell', AccountController.sell)
+router.get('/:accountId', AccountController.view)
 
 module.exports = router
