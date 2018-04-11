@@ -7,7 +7,7 @@ const fs = require('fs');
 const port = process.env.PORT || 5000;
 const server = http.createServer(app);
 
-const Price = require('./api/models/price');
+const Share = require('./api/models/share');
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
 var stocks = [];
@@ -71,26 +71,26 @@ function fetchPrices(stocks, index = 0) {
       badResponse = res.data;
       const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
       now = new Date();
-      Price.findOne({symbol: symbol}, (err, price) => {
+      Share.findOne({symbol: symbol}, (err, share) => {
         if (err) throw err;
-        if (price) {
-          if (price.price == newPrice) {
+        if (share) {
+          if (share.price == newPrice) {
             console.log('No change to price ' + symbol + ' ' + newPrice);
           } else {
-            price.price = newPrice;
-            price.date = now;
-            price.save();
+            share.price = newPrice;
+            share.date = now;
+            share.save();
             console.log('Updated price ' + symbol + ' ' + newPrice);
           }
         } else {
-          price = new Price({
+          share = new Share({
             _id: new mongoose.Types.ObjectId(),
             symbol: symbol,
             price: newPrice,
             date: now,
             name: name
           });
-          price.save();
+          share.save();
           console.log('Added new price ' + symbol + ' ' + newPrice);
         }
         if (index + 1 == stocks.length) {
