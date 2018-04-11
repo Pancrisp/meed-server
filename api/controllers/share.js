@@ -1,29 +1,28 @@
 const mongoose = require('mongoose')
-const Price = require('../models/price')
+const Share = require('../models/share')
 
 exports.viewAll = (req, res, next) => {
-  Price.find().exec((err, prices) => {
-    if (!prices) {
+  Share.find().exec((err, shares) => {
+    if (!shares) {
       return res.status(404).json({
-        message: 'No prices!'
+        message: 'No shares!'
       });
     } else {
-      res.json(prices)
-      console.log('Returned query for all prices');
+      res.json(shares)
+      console.log('Returned query for all shares');
     }
   });
 };
 
 exports.view = (req, res, next) => {
-  Price.findOne({symbol: req.params.symbol}).exec((err, price) => {
-    if (!price) {
+  Share.findOne({symbol: req.params.symbol}).exec((err, share) => {
+    if (!share) {
       return res.status(404).json({
         message: 'No price found for symbol ' + req.params.symbol
       });
     } else {
-      res.json(price)
-      console.log('Returned query for price on symbol ' + price.symbol);
+      res.json(share)
+      console.log('Returned query for price on symbol ' + share.symbol);
     }
   });
 };
-

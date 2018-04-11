@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 
-const PriceController = require('../controllers/price')
-router.get('/', PriceController.viewAll)
-router.get('/:symbol', PriceController.view)
+const ShareController = require('../controllers/share')
+router.get('/', ShareController.viewAll)
+router.get('/:symbol', ShareController.view)
 
 module.exports = router
