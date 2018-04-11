@@ -5,7 +5,8 @@ const PriceSchema = new Schema({
   _id: Schema.Types.ObjectId,
   symbol: String,
   price: Number,
-  date: Date
+  date: Date,
+  name: String
 })
 
 module.exports = mongoose.model('Price', PriceSchema)
