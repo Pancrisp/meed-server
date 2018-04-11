@@ -10,14 +10,19 @@ const server = http.createServer(app);
 const Price = require('./api/models/price');
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
-var symbols = [];
+var stocks = [];
 lines.forEach((line) => {
-  var symbol = line.split(',')[0];
-  if (symbol) {
-    symbols.push(symbol);
+  const fields = line.split(',');
+  var symbol = fields[0];
+  var name = fields[1];
+  if (symbol && name) {
+    stocks.push({
+      symbol: symbol,
+      name: name
+    });
   }
 });
-console.log('Loaded ' + symbols.length + ' symbols.');
+console.log('Loaded ' + stocks.length + ' symbols.');
 
 var now = new Date();
 const year = now.getFullYear();
@@ -35,7 +40,7 @@ console.log('API server started on port ' + port);
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
 const startFetch = Date.now()
-fetchPrices(symbols);
+fetchPrices(stocks);
 
 function pad2digits(num) {
   if (num < 10) {
@@ -45,8 +50,14 @@ function pad2digits(num) {
   }
 }
 
-function fetchPrices(symbols, index = 0) {
-  symbol = symbols[index];
+// Keep these in case we throw
+var lastIndex;
+var badResponse;
+function fetchPrices(stocks, index = 0) {
+  // Keep this in case we throw
+  lastIndex = index;
+  symbol = stocks[index].symbol;
+  name = stocks[index].name;
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_DAILY&symbol='
     + symbol + '.AX&apikey=' + apikey;
@@ -56,6 +67,8 @@ function fetchPrices(symbols, index = 0) {
       if (!res.data) {
         throw "No data in response!";
       }
+      // Keep this in case we throw
+      badResponse = res.data;
       const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
       now = new Date();
       Price.findOne({symbol: symbol}, (err, price) => {
@@ -74,22 +87,30 @@ function fetchPrices(symbols, index = 0) {
             _id: new mongoose.Types.ObjectId(),
             symbol: symbol,
             price: newPrice,
-            date: now
+            date: now,
+            name: name
           });
           price.save();
           console.log('Added new price ' + symbol + ' ' + newPrice);
         }
-        if (index + 1 == symbols.length) {
+        if (index + 1 == stocks.length) {
           const elapsedTime = (Date.now() - startFetch) / 1000;
           console.log('All ' + (index + 1) + ' prices fetched in '
             + elapsedTime + ' seconds.');
         } else {
-          fetchPrices(symbols, index + 1);
+
+          setTimeout(function() {
+            fetchPrices(stocks, index + 1)}, 1000);
         }
       });
     })
     .catch((err) => {
+      if (badResponse.includes('call frequency')) {
+        console.log('Caught call frequency complaint, trying again')
+        fetchPrices(stocks, lastIndex);
+      }
       console.log(err);
+      console.log(stashRes);
     });
 }
 

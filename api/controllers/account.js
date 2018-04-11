@@ -62,6 +62,8 @@ exports.buy = (req, res, next) => {
       });
     }
     account.balance -= value;
+    //update networth
+    account.networth += (account.balance + value);
     // If we already have shares in this symbol
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].symbol == req.body.symbol) {
@@ -131,3 +133,16 @@ exports.sell = (req, res, next) => {
   });
 }
 
+exports.view = (req, res, next) => {
+  Account.findById(req.params.accountId).exec((err, account) => {
+    //if (err) return error(err, res)
+    if(!account) {
+      return res.json({
+        message: 'No account by that ID'
+      })
+    }
+    res.json(account)
+  })
+}
+
+//when buy shares update networth
