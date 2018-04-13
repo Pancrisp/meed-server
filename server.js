@@ -50,6 +50,7 @@ function pad2digits(num) {
   }
 }
 
+const callFrequency = 1500;
 // Keep these in case we throw
 var lastIndex = 0;
 var badResponse;
@@ -101,7 +102,7 @@ function fetchPrices(stocks, index = 0) {
             + elapsedTime + ' seconds.');
         } else {
           // Fetch the next price in 2 seconds
-          setTimeout(fetchPrices, 2000, stocks, index + 1);
+          setTimeout(fetchPrices, callFrequency, stocks, index + 1);
         }
       });
     })
@@ -111,7 +112,7 @@ function fetchPrices(stocks, index = 0) {
         console.log(badResponse);
         console.log('Trying again...');
         // Fetch the same price in 2 seconds
-        setTimeout(fetchPrices, 2000, stocks, lastIndex);
+        setTimeout(fetchPrices, callFrequency, stocks, lastIndex);
       } else {
         console.log('Exception thrown while fetching prices:')
         console.log(err);
