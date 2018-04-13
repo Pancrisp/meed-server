@@ -10,11 +10,11 @@ const server = http.createServer(app);
 const Share = require('./api/models/share');
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
-var stocks = [];
+let stocks = [];
 lines.forEach((line) => {
   const fields = line.split(',');
-  var symbol = fields[0];
-  var name = fields[1];
+  let symbol = fields[0];
+  let name = fields[1];
   if (symbol && name) {
     stocks.push({
       symbol: symbol,
@@ -24,7 +24,7 @@ lines.forEach((line) => {
 });
 console.log('Loaded ' + stocks.length + ' symbols.');
 
-var now = new Date();
+let now = new Date();
 const year = now.getFullYear();
 const month = pad2digits(now.getMonth() + 1);
 const day = pad2digits(now.getDate());
@@ -51,8 +51,9 @@ function pad2digits(num) {
 }
 
 // Keep these in case we throw
-var lastIndex;
+var lastIndex = 0;
 var badResponse;
+var queryTime = 0;
 function fetchPrices(stocks, index = 0) {
   // Keep this in case we throw
   lastIndex = index;
@@ -62,10 +63,11 @@ function fetchPrices(stocks, index = 0) {
     + 'query?function=TIME_SERIES_DAILY&symbol='
     + symbol + '.AX&apikey=' + apikey;
 
+  queryTime = Date.now();
   axios.get(url)
     .then((res) => {
       if (!res.data) {
-        throw "No data in response!";
+        throw 'No data in response';
       }
       // Keep this in case we throw
       badResponse = res.data;
@@ -98,20 +100,23 @@ function fetchPrices(stocks, index = 0) {
           console.log('All ' + (index + 1) + ' prices fetched in '
             + elapsedTime + ' seconds.');
         } else {
-
-          setTimeout(function() {
-            fetchPrices(stocks, index + 1)}, 1000);
+          // Fetch the next price in 2 seconds
+          setTimeout(fetchPrices, 2000, stocks, index + 1);
         }
       });
     })
     .catch((err) => {
       if (badResponse.Information && badResponse.Information.includes('call frequency')) {
-        console.log('Caught call frequency complaint, trying again')
+        console.log('Caught call frequency complaint:')
         console.log(badResponse);
-        fetchPrices(stocks, lastIndex);
+        console.log('Trying again...');
+        // Fetch the same price in 2 seconds
+        setTimeout(fetchPrices, 2000, stocks, lastIndex);
       } else {
+        console.log('Exception thrown while fetching prices:')
         console.log(err);
-        console.log(stashRes);
+        console.log('Response from server was:')
+        console.log(badResponse);
       }
     });
 }
