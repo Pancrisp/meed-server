@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const Account = require('../models/account')
 const User = require('../models/user')
-const Price = require('../models/price')
+const Share = require('../models/share')
 
 exports.createAccount = (req, res, next) => {
   if (!req.body.userId) {
@@ -42,13 +42,13 @@ exports.buy = (req, res, next) => {
     });
   }
   var value = 0;
-  Price.findOne({symbol: req.body.symbol}).exec((err, price) => {
-    if (!price) {
+  Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
+    if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    value = price.price * req.body.quantity;
+    value = share.price * req.body.quantity;
   });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {
@@ -97,13 +97,13 @@ exports.sell = (req, res, next) => {
     });
   }
   var value = 0;
-  Price.findOne({symbol: req.body.symbol}).exec((err, price) => {
-    if (!price) {
+  Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
+    if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    value = price.price * req.body.quantity;
+    value = share.price * req.body.quantity;
   });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {

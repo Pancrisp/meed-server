@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
-const PriceSchema = new Schema({
+const ShareSchema = new Schema({
   _id: Schema.Types.ObjectId,
   symbol: String,
   price: Number,
@@ -9,6 +9,6 @@ const PriceSchema = new Schema({
   name: String
 })
 
-module.exports = mongoose.model('Price', PriceSchema)
+module.exports = mongoose.model('Share', ShareSchema)
 
 // vi: sw=2
