@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const Account = require('../models/account')
 const User = require('../models/user')
 const Share = require('../models/share')
+const Transaction = require('../models/transaction')
 
 exports.createAccount = (req, res, next) => {
   if (!req.body.userId) {
@@ -41,14 +42,16 @@ exports.buy = (req, res, next) => {
       message: 'Bad request'
     });
   }
-  var value = 0;
+  let value = 0;
+  let price = 0;
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    value = share.price * req.body.quantity;
+    price = share.price;
+    value = price * req.body.quantity;
   });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {
@@ -64,13 +67,24 @@ exports.buy = (req, res, next) => {
     account.balance -= value;
     //update networth
     account.networth += (account.balance + value);
+    // Add a transaction record for this purchase
+    trans = new Transaction({
+      _id: new mongoose.Types.ObjectId(),
+      share: req.body.symbol,
+      quantity: req.body.quantity,
+      price: price,
+      action: 'buy'
+    });
+    trans.save();
+    account.transactions.push(trans._id);
     // If we already have shares in this symbol
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].symbol == req.body.symbol) {
+        found = true;
         account.shares[i].quantity += req.body.quantity;
         account.save()
         return res.json({
-          message: 'Shares added to account',
+          message: 'New share added to account',
           account: account
         });
       }
@@ -85,7 +99,7 @@ exports.buy = (req, res, next) => {
       message: 'Shares purchased',
       account: account
     });
-  })
+  });
 }
 
 exports.sell = (req, res, next) => {
@@ -96,14 +110,16 @@ exports.sell = (req, res, next) => {
       message: 'Bad request'
     });
   }
-  var value = 0;
+  let value = 0;
+  let price = 0;
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    value = share.price * req.body.quantity;
+    price = share.price;
+    value = price * req.body.quantity;
   });
   Account.findById(req.body.accountId).exec((err, account) => {
     if (!account) {
@@ -120,6 +136,16 @@ exports.sell = (req, res, next) => {
         }
         account.shares[i].quantity -= req.body.quantity;
         account.balance += value;
+        // Add a transaction record for this purchase
+        trans = new Transaction({
+          _id: new mongoose.Types.ObjectId(),
+          share: req.body.symbol,
+          quantity: req.body.quantity,
+          price: price,
+          action: 'sell'
+        });
+        trans.save();
+        account.transactions.push(trans._id);
         account.save();
         return res.json({
           message: 'Shares sold.',
