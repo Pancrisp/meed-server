@@ -105,12 +105,14 @@ function fetchPrices(stocks, index = 0) {
       });
     })
     .catch((err) => {
-      if (badResponse.includes('call frequency')) {
+      if (badResponse.Information && badResponse.Information.includes('call frequency')) {
         console.log('Caught call frequency complaint, trying again')
+        console.log(badResponse);
         fetchPrices(stocks, lastIndex);
+      } else {
+        console.log(err);
+        console.log(stashRes);
       }
-      console.log(err);
-      console.log(stashRes);
     });
 }
 
