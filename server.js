@@ -62,7 +62,7 @@ function fetchPrices(stocks, index = 0) {
       // Turn the price series into an array
       const prices = Object.values(res.data['Time Series (1min)'])
       // Use the latest price
-      const newPrice = prices[0]['3. close'];
+      const newPrice = prices[0]['4. close'];
       const now = new Date();
       Share.findOne({symbol: symbol}, (err, share) => {
         if (err) throw err;
