@@ -97,7 +97,7 @@ function fetchPrices(stocks, index = 0) {
           console.log('All ' + (index + 1) + ' prices fetched in '
             + elapsedTime + ' seconds.');
         } else {
-          // Fetch the next price in 2 seconds
+          // Fetch the next price after a delay
           setTimeout(fetchPrices, callFrequency, stocks, index + 1);
         }
       });
@@ -105,15 +105,17 @@ function fetchPrices(stocks, index = 0) {
     .catch((err) => {
       if (badResponse.Information && badResponse.Information.includes('call frequency')) {
         console.log('Caught call frequency complaint, trying again...')
-        // Fetch the same price in 2 seconds
-        setTimeout(fetchPrices, callFrequency, stocks, lastIndex);
+        // Fetch the same price after a delay
+        setTimeout(fetchPrices, callFrequency, stocks, index);
+      } else if (badResponse['Error Message']
+        && badResponse['Error Message'].includes('Invalid API call')) {
+        console.log('Caught API call complaint\nRequest URL was:\n'
+          + url + '\nTrying next symbol...');
+        setTimeout(fetchPrices, callFrequency, stocks, index + 1);
       } else {
-        console.log('Exception thrown while fetching prices:');
-        console.log(err);
-        console.log('Response from server was:');
-        console.log(badResponse);
-        console.log('Request URL was:');
-        console.log(url);
+        console.log('Exception thrown while fetching prices:\n' + err);
+        console.log('Response from server was:\n' + badResponse);
+        console.log('Request URL was:\n' + url);
       }
     });
 }
