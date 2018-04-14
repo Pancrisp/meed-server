@@ -45,24 +45,18 @@ function pad2digits(num) {
 
 const callFrequency = 1500;
 // Keep these in case we throw
-var lastIndex = 0;
-var badResponse;
-var queryTime = 0;
 function fetchPrices(stocks, index = 0) {
   // Keep this in case we throw
-  lastIndex = index;
+  let badResponse = {};
   symbol = stocks[index].symbol;
   name = stocks[index].name;
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_INTRADAY&symbol='
     + symbol + '.AX&interval=1min&apikey=' + apikey;
 
-  queryTime = Date.now();
+  const queryTime = Date.now();
   axios.get(url)
     .then((res) => {
-      if (!res.data) {
-        throw 'No data in response';
-      }
       // Keep this in case we throw
       badResponse = res.data;
       // Turn the price series into an array
