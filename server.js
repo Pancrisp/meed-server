@@ -108,10 +108,12 @@ function fetchPrices(stocks, index = 0) {
         // Fetch the same price in 2 seconds
         setTimeout(fetchPrices, callFrequency, stocks, lastIndex);
       } else {
-        console.log('Exception thrown while fetching prices:')
+        console.log('Exception thrown while fetching prices:');
         console.log(err);
-        console.log('Response from server was:')
+        console.log('Response from server was:');
         console.log(badResponse);
+        console.log('Request URL was:');
+        console.log(url);
       }
     });
 }
