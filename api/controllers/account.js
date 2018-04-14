@@ -65,8 +65,6 @@ exports.buy = (req, res, next) => {
       });
     }
     account.balance -= value;
-    //update networth
-    account.networth += (account.balance + value);
     // Add a transaction record for this purchase
     trans = new Transaction({
       _id: new mongoose.Types.ObjectId(),
@@ -135,6 +133,10 @@ exports.sell = (req, res, next) => {
           });
         }
         account.shares[i].quantity -= req.body.quantity;
+        // if we sold the last shares, remove the share record
+        if (account.shares[i].quantity == 0) {
+          account.shares.splice(i, 1);
+        }
         account.balance += value;
         // Add a transaction record for this purchase
         trans = new Transaction({
@@ -170,5 +172,4 @@ exports.view = (req, res, next) => {
     res.json(account)
   })
 }
-
-//when buy shares update networth
+// vi: sw=2
