@@ -24,12 +24,20 @@ lines.forEach((line) => {
 });
 console.log('Loaded ' + stocks.length + ' symbols.');
 
-let now = new Date();
-const year = now.getFullYear();
-const month = pad2digits(now.getMonth() + 1);
-const day = pad2digits(now.getDate());
-const datestr = year + '-' + month + '-' + day;
-console.log('Today is ' + datestr);
+const today_date = new Date();
+let year = today_date.getFullYear();
+let month = pad2digits(today_date.getMonth() + 1);
+let day = pad2digits(today_date.getDate());
+const today = year + '-' + month + '-' + day;
+const twentyFourHours = 86400000;
+const yesterday_ms = today_date.getTime() - twentyFourHours;
+const yesterday_date = new Date(yesterday_ms);
+year = yesterday_date.getFullYear();
+month = pad2digits(yesterday_date.getMonth() + 1);
+day = pad2digits(yesterday_date.getDate());
+const yesterday = year + '-' + month + '-' + day;
+console.log('Today is ' + today);
+console.log('Yesterday was ' + yesterday);
 
 const apikey = '6GOVBYU35WIUMU2X';
 
@@ -72,8 +80,16 @@ function fetchPrices(stocks, index = 0) {
       }
       // Keep this in case we throw
       badResponse = res.data;
-      const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
-      now = new Date();
+      // If we have prices for today, use them
+      // otherwise fall back to yesterday
+      let newPrice;
+      if (res.data['Time Series (Daily)'][today]) {
+        newPrice = res.data['Time Series (Daily)'][today]['1. open'];
+      } else {
+        console.log("Falling back to yesterday's price");
+        newPrice = res.data['Time Series (Daily)'][yesterday]['1. open'];
+      }
+      let now = new Date();
       Share.findOne({symbol: symbol}, (err, share) => {
         if (err) throw err;
         if (share) {
