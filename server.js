@@ -54,8 +54,8 @@ function fetchPrices(stocks, index = 0) {
   symbol = stocks[index].symbol;
   name = stocks[index].name;
   const url = 'https://www.alphavantage.co/'
-    + 'query?function=TIME_SERIES_DAILY&symbol='
-    + symbol + '.AX&apikey=' + apikey;
+    + 'query?function=TIME_SERIES_INTRADAY&symbol='
+    + symbol + '.AX&interval=1min&apikey=' + apikey;
 
   queryTime = Date.now();
   axios.get(url)
@@ -66,7 +66,7 @@ function fetchPrices(stocks, index = 0) {
       // Keep this in case we throw
       badResponse = res.data;
       // Turn the price series into an array
-      const prices = Object.values(res.data['Time Series (Daily)'])
+      const prices = Object.values(res.data['Time Series (1min)'])
       // Use the latest price
       const newPrice = prices[0]['1. open'];
       const now = new Date();
