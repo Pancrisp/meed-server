@@ -24,13 +24,6 @@ lines.forEach((line) => {
 });
 console.log('Loaded ' + stocks.length + ' symbols.');
 
-let now = new Date();
-const year = now.getFullYear();
-const month = pad2digits(now.getMonth() + 1);
-const day = pad2digits(now.getDate());
-const datestr = year + '-' + month + '-' + day;
-console.log('Today is ' + datestr);
-
 const apikey = '6GOVBYU35WIUMU2X';
 
 // Start listening
@@ -52,28 +45,25 @@ function pad2digits(num) {
 
 const callFrequency = 1500;
 // Keep these in case we throw
-var lastIndex = 0;
-var badResponse;
-var queryTime = 0;
 function fetchPrices(stocks, index = 0) {
   // Keep this in case we throw
-  lastIndex = index;
+  let badResponse = {};
   symbol = stocks[index].symbol;
   name = stocks[index].name;
   const url = 'https://www.alphavantage.co/'
-    + 'query?function=TIME_SERIES_DAILY&symbol='
-    + symbol + '.AX&apikey=' + apikey;
+    + 'query?function=TIME_SERIES_INTRADAY&symbol='
+    + symbol + '.AX&interval=1min&apikey=' + apikey;
 
-  queryTime = Date.now();
+  const queryTime = Date.now();
   axios.get(url)
     .then((res) => {
-      if (!res.data) {
-        throw 'No data in response';
-      }
       // Keep this in case we throw
       badResponse = res.data;
-      const newPrice = res.data['Time Series (Daily)'][datestr]['1. open'];
-      now = new Date();
+      // Turn the price series into an array
+      const prices = Object.values(res.data['Time Series (1min)'])
+      // Use the latest price
+      const newPrice = prices[0]['4. close'];
+      const now = new Date();
       Share.findOne({symbol: symbol}, (err, share) => {
         if (err) throw err;
         if (share) {
@@ -101,23 +91,25 @@ function fetchPrices(stocks, index = 0) {
           console.log('All ' + (index + 1) + ' prices fetched in '
             + elapsedTime + ' seconds.');
         } else {
-          // Fetch the next price in 2 seconds
+          // Fetch the next price after a delay
           setTimeout(fetchPrices, callFrequency, stocks, index + 1);
         }
       });
     })
     .catch((err) => {
       if (badResponse.Information && badResponse.Information.includes('call frequency')) {
-        console.log('Caught call frequency complaint:')
-        console.log(badResponse);
-        console.log('Trying again...');
-        // Fetch the same price in 2 seconds
-        setTimeout(fetchPrices, callFrequency, stocks, lastIndex);
+        console.log('Caught call frequency complaint, trying again...')
+        // Fetch the same price after a delay
+        setTimeout(fetchPrices, callFrequency, stocks, index);
+      } else if (badResponse['Error Message']
+        && badResponse['Error Message'].includes('Invalid API call')) {
+        console.log('Caught API call complaint\nRequest URL was:\n'
+          + url + '\nTrying next symbol...');
+        setTimeout(fetchPrices, callFrequency, stocks, index + 1);
       } else {
-        console.log('Exception thrown while fetching prices:')
-        console.log(err);
-        console.log('Response from server was:')
-        console.log(badResponse);
+        console.log('Exception thrown while fetching prices:\n' + err);
+        console.log('Response from server was:\n' + badResponse);
+        console.log('Request URL was:\n' + url);
       }
     });
 }
