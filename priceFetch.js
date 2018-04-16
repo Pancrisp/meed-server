@@ -26,8 +26,13 @@ lines.forEach((line) => {
 console.log('Loaded ' + shareList.length + ' symbols.');
 
 console.log('Fetching prices...');
-fetchAllPrices(shareList);
+fetchAllPrices(shareList).then(() => {
+  fetchAllPriceHistory(shareList);
+});
 
+// fetchAllPriceHistory(shareList);
+
+//get lastest prices
 function fetchAllPrices(shareList) {
   // Build a chain of promises
   let chain = Promise.resolve();
@@ -36,6 +41,79 @@ function fetchAllPrices(shareList) {
       return fetchPrice(shareList[i]);
     });
   }
+  return chain;
+}
+
+//get price history
+function fetchAllPriceHistory(shareList) {
+  // Build a chain of promises
+  let chain = Promise.resolve();
+  for (let i = 0; i < shareList.length; i++) {
+    chain = chain.then(() => {
+      return fetchPriceHistory(shareList[i]);
+    });
+  }
+}
+
+function fetchPriceHistory(shareInfo) {
+  const url = 'https://www.alphavantage.co/'
+    + 'query?function=TIME_SERIES_DAILY&symbol='
+    + shareInfo.symbol + '.AX&apikey='
+    + process.env.APIKEY;
+
+    return axios.get(url)
+      .then((res) => {
+        if (res.data.Information
+          && res.data.Information.includes('call frequency')) {
+          console.log('Caught call frequency complaint, trying again')
+          return fetchPriceHistory(shareInfo);
+        } else if (res.data['Error Message']
+          && res.data['Error Message'].includes('Invalid API call')) {
+          console.log('Received API call complaint for symbol '
+            + shareInfo.symbol);
+          return;
+        }
+        //get the last 30 days
+        const prices  = Object.values(res.data['Time Series (Daily)'])
+        const dates  = Object.keys(res.data['Time Series (Daily)'])
+        const numberOfDays = 30;
+
+        priceArray = []
+        //access 30 days
+        for(i=0;i<=numberOfDays;i++) {
+          const closingPrice = prices[i]['4. close']
+          const priceDate = dates[i];
+          const date = new Date(priceDate);
+          priceArray.push({date: date, price: closingPrice});
+        }
+        uploadShareHistory(priceArray,shareInfo);
+      })
+      .catch((err) => {
+        if (err.response && err.response.status
+          && err.response.status == 503) {
+          console.log('Server responds 503: Service unavailable.\nRetrying...');
+          return fetchPrice(shareInfo);
+        }
+        console.log('Exception thrown while fetching prices:');
+        console.log(err);
+        console.log('Response from server was:');
+        console.log(err.response);
+      });
+}
+
+function uploadShareHistory(priceArray,shareInfo) {
+  Share.findOne({symbol: shareInfo.symbol}, (err, share) => {
+    if (err) throw err;
+    if (!share) {
+      console.log("No share price history")
+      return;
+    } else {
+      //add share priceHistory
+      share.priceHistory = priceArray;
+      share.save();
+      console.log("Updated price history for share" + shareInfo.symbol);
+    }
+  });
 }
 
 function fetchPrice(shareInfo) {
@@ -87,7 +165,7 @@ function uploadSharePrice(price, shareInfo) {
         name: shareInfo.name
       });
       share.save();
-      console.log('Added new price ' + symbol + ' ' + newPrice);
+      console.log('Added new price ' + shareInfo.symbol + ' ' + price);
     } else {
       if (share.price == price) {
         console.log('No change to price ' + shareInfo.symbol + ' ' + price);
@@ -99,6 +177,7 @@ function uploadSharePrice(price, shareInfo) {
       }
     }
   });
+
 }
 
 // vi: sw=2
