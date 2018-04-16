@@ -9,8 +9,7 @@ const server = http.createServer(app);
 
 const Share = require('./api/models/share');
 
-const apikey = '6GOVBYU35WIUMU2X';
-const callFrequency = 0;
+const APIKEY = '6GOVBYU35WIUMU2X';
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
 let shareList = [];
@@ -33,10 +32,7 @@ console.log('API server started on port ' + port);
 // Recursively fetch the prices
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
-let missedShares = [];
-let retry = true;
-let startFetch = Date.now()
-fetchPrices(shareList);
+fetchAllPrices(shareList);
 
 function uploadSharePrice(price, shareInfo) {
   Share.findOne({symbol: shareInfo.symbol}, (err, share) => {
@@ -64,65 +60,49 @@ function uploadSharePrice(price, shareInfo) {
   });
 }
 
-function fetchPrices(shareList, index = 0) {
-  if (index + 1 >= shareList.length) {
-    const elapsedTime = (Date.now() - startFetch) / 1000;
-    console.log(shareList.length + ' prices fetched in '
-      + elapsedTime + ' seconds.');
-      // Retry symbols missed when an API call complaint was received
-    if (retry && missedShares.length > 0) {
-      console.log('Retrying missed symbols...');
-      retry = false;
-      startFetch = Date.now();
-      setTimeout(fetchPrices, callFrequency, missedShares);
-      return;
-    }
-    console.log('Fetch complete.');
-    return;
+function fetchAllPrices(shareList) {
+  // Build a chain of promises
+  let chain = Promise.resolve();
+  for (let i = 0; i < shareList.length; i++) {
+    chain = chain.then(() => {
+      return fetchPrice(shareList[i]);
+    });
   }
-  // Keep this in case we throw
-  let badResponse = {};
+}
+
+function fetchPrice(shareInfo) {
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_INTRADAY&symbol='
-    + shareList[index].symbol + '.AX&interval=1min&apikey=' + apikey;
+    + shareInfo.symbol + '.AX&interval=1min&apikey=' + APIKEY;
 
-  const queryTime = Date.now();
-  axios.get(url)
+  return axios.get(url)
     .then((res) => {
-      // Keep this in case we throw
-      badResponse = res;
-      if (res.data.Information && res.data.Information.includes('call frequency')) {
-        console.log('Caught call frequency complaint, trying again...')
-        setTimeout(fetchPrices, callFrequency, shareList, index);
-        return;
+      if (res.data.Information
+        && res.data.Information.includes('call frequency')) {
+        console.log('Caught call frequency complaint, trying again')
+        return fetchPrice(shareInfo);
       } else if (res.data['Error Message']
         && res.data['Error Message'].includes('Invalid API call')) {
         console.log('Received API call complaint for symbol '
-          + shareList[index].symbol + '. Trying next symbol...');
-        if (retry) {
-          missedShares.push(shareList[index]);
-        }
-        setTimeout(fetchPrices, callFrequency, shareList, index + 1);
+          + shareInfo.symbol);
         return;
       }
       // Turn the price series into an array
       const prices = Object.values(res.data['Time Series (1min)'])
       // Use the latest price
       const newPrice = prices[0]['1. open'];
-      uploadSharePrice(newPrice, shareList[index]);
-      // Fetch the next price after a delay
-      setTimeout(fetchPrices, callFrequency, shareList, index + 1);
-      return;
+      uploadSharePrice(newPrice, shareInfo);
     })
     .catch((err) => {
       if (err.response && err.response.status
         && err.response.status == 503) {
         console.log('Server responds 503: Service unavailable.\nRetrying...');
-        setTimeout(fetchPrices, callFrequency, shareList, index);
-        return;
+        return fetchPrice(shareInfo);
       }
       console.log('Exception thrown while fetching prices:');
       console.log(err);
+      console.log('Response from server was:');
+      console.log(err.response);
     });
 }
 
