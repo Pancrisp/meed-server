@@ -9,22 +9,22 @@ const server = http.createServer(app);
 
 const Share = require('./api/models/share');
 
+const APIKEY = '6GOVBYU35WIUMU2X';
+
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
-let stocks = [];
+let shareList = [];
 lines.forEach((line) => {
   const fields = line.split(',');
   let symbol = fields[0];
   let name = fields[1];
   if (symbol && name) {
-    stocks.push({
+    shareList.push({
       symbol: symbol,
       name: name
     });
   }
 });
-console.log('Loaded ' + stocks.length + ' symbols.');
-
-const apikey = '6GOVBYU35WIUMU2X';
+console.log('Loaded ' + shareList.length + ' symbols.');
 
 // Start listening
 server.listen(port);
@@ -32,85 +32,77 @@ console.log('API server started on port ' + port);
 // Recursively fetch the prices
 // (So that we get each price one at a time)
 console.log('Fetching prices...');
-const startFetch = Date.now()
-fetchPrices(stocks);
+fetchAllPrices(shareList);
 
-function pad2digits(num) {
-  if (num < 10) {
-    return '0' + num;
-  } else {
-    return num;
+function uploadSharePrice(price, shareInfo) {
+  Share.findOne({symbol: shareInfo.symbol}, (err, share) => {
+    if (err) throw err;
+    if (!share) {
+      share = new Share({
+        _id: new mongoose.Types.ObjectId(),
+        symbol: shareInfo.symbol,
+        price: price,
+        date: Date.now(),
+        name: shareInfo.name
+      });
+      share.save();
+      console.log('Added new price ' + symbol + ' ' + newPrice);
+    } else {
+      if (share.price == price) {
+        console.log('No change to price ' + shareInfo.symbol + ' ' + price);
+      } else {
+        share.price = price;
+        share.date = Date.now();
+        share.save();
+        console.log('Updated price ' + shareInfo.symbol + ' ' + price);
+      }
+    }
+  });
+}
+
+function fetchAllPrices(shareList) {
+  // Build a chain of promises
+  let chain = Promise.resolve();
+  for (let i = 0; i < shareList.length; i++) {
+    chain = chain.then(() => {
+      return fetchPrice(shareList[i]);
+    });
   }
 }
 
-const callFrequency = 1500;
-// Keep these in case we throw
-function fetchPrices(stocks, index = 0) {
-  // Keep this in case we throw
-  let badResponse = {};
-  symbol = stocks[index].symbol;
-  name = stocks[index].name;
+function fetchPrice(shareInfo) {
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_INTRADAY&symbol='
-    + symbol + '.AX&interval=1min&apikey=' + apikey;
+    + shareInfo.symbol + '.AX&interval=1min&apikey=' + APIKEY;
 
-  const queryTime = Date.now();
-  axios.get(url)
+  return axios.get(url)
     .then((res) => {
-      // Keep this in case we throw
-      badResponse = res.data;
+      if (res.data.Information
+        && res.data.Information.includes('call frequency')) {
+        console.log('Caught call frequency complaint, trying again')
+        return fetchPrice(shareInfo);
+      } else if (res.data['Error Message']
+        && res.data['Error Message'].includes('Invalid API call')) {
+        console.log('Received API call complaint for symbol '
+          + shareInfo.symbol);
+        return;
+      }
       // Turn the price series into an array
       const prices = Object.values(res.data['Time Series (1min)'])
-      // Use the latest price
+      // Use the latest closing price
       const newPrice = prices[0]['4. close'];
-      const now = new Date();
-      Share.findOne({symbol: symbol}, (err, share) => {
-        if (err) throw err;
-        if (share) {
-          if (share.price == newPrice) {
-            console.log('No change to price ' + symbol + ' ' + newPrice);
-          } else {
-            share.price = newPrice;
-            share.date = now;
-            share.save();
-            console.log('Updated price ' + symbol + ' ' + newPrice);
-          }
-        } else {
-          share = new Share({
-            _id: new mongoose.Types.ObjectId(),
-            symbol: symbol,
-            price: newPrice,
-            date: now,
-            name: name
-          });
-          share.save();
-          console.log('Added new price ' + symbol + ' ' + newPrice);
-        }
-        if (index + 1 == stocks.length) {
-          const elapsedTime = (Date.now() - startFetch) / 1000;
-          console.log('All ' + (index + 1) + ' prices fetched in '
-            + elapsedTime + ' seconds.');
-        } else {
-          // Fetch the next price after a delay
-          setTimeout(fetchPrices, callFrequency, stocks, index + 1);
-        }
-      });
+      uploadSharePrice(newPrice, shareInfo);
     })
     .catch((err) => {
-      if (badResponse.Information && badResponse.Information.includes('call frequency')) {
-        console.log('Caught call frequency complaint, trying again...')
-        // Fetch the same price after a delay
-        setTimeout(fetchPrices, callFrequency, stocks, index);
-      } else if (badResponse['Error Message']
-        && badResponse['Error Message'].includes('Invalid API call')) {
-        console.log('Caught API call complaint\nRequest URL was:\n'
-          + url + '\nTrying next symbol...');
-        setTimeout(fetchPrices, callFrequency, stocks, index + 1);
-      } else {
-        console.log('Exception thrown while fetching prices:\n' + err);
-        console.log('Response from server was:\n' + badResponse);
-        console.log('Request URL was:\n' + url);
+      if (err.response && err.response.status
+        && err.response.status == 503) {
+        console.log('Server responds 503: Service unavailable.\nRetrying...');
+        return fetchPrice(shareInfo);
       }
+      console.log('Exception thrown while fetching prices:');
+      console.log(err);
+      console.log('Response from server was:');
+      console.log(err.response);
     });
 }
 
