@@ -4,15 +4,9 @@ const Schema = mongoose.Schema
 const UserSchema = new Schema({
   _id: Schema.Types.ObjectId,
   name: { type: String, required: true },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    // validation
-    // match: [some crazy regex]
-  },
+  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  accounts: [{type: Schema.Types.ObjectId, ref: 'Accounts'}]
+  accounts: [{ type: Schema.Types.ObjectId, ref: 'Accounts' }]
 })
 
 module.exports = mongoose.model('Users', UserSchema)

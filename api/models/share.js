@@ -7,9 +7,9 @@ const ShareSchema = new Schema({
   price: Number,
   date: Date,
   name: String,
-  priceHistory: [{date:Date, price: Number}]
+  priceHistory: [{ date:Date, price: Number }]
 })
 
-module.exports = mongoose.model('Share', ShareSchema)
+module.exports = mongoose.model('Shares', ShareSchema)
 
 // vi: sw=2
