@@ -13,8 +13,8 @@ exports.createAccount = (req, res, next) => {
   User.findById(req.body.userId).exec((err, user) => {
     const account = new Account({
       _id: new mongoose.Types.ObjectId(),
-      balance: 2000000,
-      networth: 0,
+      balance: 1000000,
+      networth: 1000000,
     })
     if (!user) {
       return res.status(404).json({
@@ -176,7 +176,7 @@ exports.sell = (req, res, next) => {
 exports.view = (req, res, next) => {
   Account.findById(req.params.accountId)
     .populate('transactions')
-    .populate('shares')
+    .populate('shares.share')
     .exec((err, account) => {
       //if (err) return error(err, res)
       if(!account) {
