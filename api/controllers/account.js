@@ -42,16 +42,17 @@ exports.buy = (req, res, next) => {
       message: 'Bad request'
     });
   }
-  let value = 0;
-  let price = 0;
+
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    price = share.price;
-    value = price * req.body.quantity;
+    const price = share.price;
+    const value = price * req.body.quantity;
+    const brokerage = value * 0.01 + 50;
+    const total = value + brokerage;
     Account.findById(req.body.accountId)
       .populate('shares.share')
       .exec((err, account) => {
@@ -60,12 +61,13 @@ exports.buy = (req, res, next) => {
             message: 'No account by that ID'
           });
         }
-        if (account.balance < value) {
+        if (account.balance < total) {
           return res.json({
             message: 'Insufficient funds'
           });
         }
-        account.balance -= value;
+        account.balance -= total;
+        account.networth -= brokerage;
         // Add a transaction record for this purchase
         trans = new Transaction({
           _id: new mongoose.Types.ObjectId(),
@@ -111,16 +113,17 @@ exports.sell = (req, res, next) => {
       message: 'Bad request'
     });
   }
-  let value = 0;
-  let price = 0;
+
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
       return res.json({
         message: 'Unrecognised symbol'
       });
     }
-    price = share.price;
-    value = price * req.body.quantity;
+    const price = share.price;
+    const value = price * req.body.quantity;
+    const brokerage = value * 0.0025 + 50;
+    const total = value - brokerage;
     Account.findById(req.body.accountId)
       .populate('shares.share')
       .exec((err, account) => {
@@ -142,7 +145,8 @@ exports.sell = (req, res, next) => {
             if (account.shares[i].quantity == 0) {
               account.shares.splice(i, 1);
             }
-            account.balance += value;
+            account.balance += total;
+            account.networth -= brokerage;
             // Add a transaction record for this purchase
             trans = new Transaction({
               _id: new mongoose.Types.ObjectId(),
