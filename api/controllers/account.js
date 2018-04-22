@@ -52,51 +52,56 @@ exports.buy = (req, res, next) => {
     }
     price = share.price;
     value = price * req.body.quantity;
-  });
-  Account.findById(req.body.accountId).exec((err, account) => {
-    if (!account) {
-      return res.json({
-        message: 'No account by that ID'
-      });
-    }
-    if (account.balance < value) {
-      return res.json({
-        message: 'Insufficient funds'
-      });
-    }
-    account.balance -= value;
-    // Add a transaction record for this purchase
-    trans = new Transaction({
-      _id: new mongoose.Types.ObjectId(),
-      share: req.body.symbol,
-      quantity: req.body.quantity,
-      price: price,
-      action: 'buy'
-    });
-    trans.save();
-    account.transactions.push(trans._id);
-    // If we already have shares in this symbol
-    for (var i = 0; i < account.shares.length; i++) {
-      if (account.shares[i].symbol == req.body.symbol) {
-        found = true;
-        account.shares[i].quantity += req.body.quantity;
-        account.save()
+    Account.findById(req.body.accountId)
+      .populate('shares.share')
+      .exec((err, account) => {
+        if (!account) {
+          return res.json({
+            message: 'No account by that ID'
+          });
+        }
+        console.log(account);
+        console.log(account.shares[0].symbol);
+        if (account.balance < value) {
+          return res.json({
+            message: 'Insufficient funds'
+          });
+        }
+        account.balance -= value;
+        // Add a transaction record for this purchase
+        trans = new Transaction({
+          _id: new mongoose.Types.ObjectId(),
+          share: req.body.symbol,
+          quantity: req.body.quantity,
+          price: price,
+          action: 'buy',
+          date: Date.now()
+        });
+        trans.save();
+        account.transactions.push(trans._id);
+        // If we already have shares in this symbol
+        for (var i = 0; i < account.shares.length; i++) {
+          if (account.shares[i].share.symbol == req.body.symbol) {
+            found = true;
+            account.shares[i].quantity += req.body.quantity;
+            account.save()
+            return res.json({
+              message: 'New share added to account',
+              account: account
+            });
+          }
+        }
+        // If we could not find any existing shares in this symbol
+        account.shares.push({
+          share: share._id,
+          quantity: req.body.quantity
+        });
+        account.save();
         return res.json({
-          message: 'New share added to account',
+          message: 'Shares purchased',
           account: account
         });
-      }
-    }
-    // If we could not find any existing shares in this symbol
-    account.shares.push({
-      symbol: req.body.symbol,
-      quantity: req.body.quantity
-    });
-    account.save();
-    return res.json({
-      message: 'Shares purchased',
-      account: account
-    });
+      });
   });
 }
 
@@ -118,61 +123,69 @@ exports.sell = (req, res, next) => {
     }
     price = share.price;
     value = price * req.body.quantity;
-  });
-  Account.findById(req.body.accountId).exec((err, account) => {
-    if (!account) {
-      return res.json({
-        message: 'No account by that ID'
-      });
-    }
-    for (var i = 0; i < account.shares.length; i++) {
-      if (account.shares[i].symbol == req.body.symbol) {
-        if (account.shares[i].quantity < req.body.quantity) {
+    Account.findById(req.body.accountId)
+      .populate('shares.share')
+      .exec((err, account) => {
+        if (err) console.log(err);
+        if (!account) {
           return res.json({
-            message: 'This account does not have that many shares'
+            message: 'No account by that ID'
           });
         }
-        account.shares[i].quantity -= req.body.quantity;
-        // if we sold the last shares, remove the share record
-        if (account.shares[i].quantity == 0) {
-          account.shares.splice(i, 1);
-        }
-        account.balance += value;
-        // Add a transaction record for this purchase
-        trans = new Transaction({
-          _id: new mongoose.Types.ObjectId(),
-          share: req.body.symbol,
-          quantity: req.body.quantity,
-          price: price,
-          action: 'sell'
-        });
-        trans.save();
-        account.transactions.push(trans._id);
-        account.save();
+        console.log(account.shares.length);
+        console.log(account.shares);
+        for (var i = 0; i < account.shares.length; i++) {
+          console.log(account.shares[i].share);
+          console.log(account.shares[i].share.symbol);
+          if (account.shares[i].share.symbol == req.body.symbol) {
+            if (account.shares[i].share.quantity < req.body.quantity) {
+              return res.json({
+                message: 'This account does not have that many shares'
+              });
+            }
+            account.shares[i].share.quantity -= req.body.quantity;
+            // if we sold the last shares, remove the share record
+            if (account.shares[i].share.quantity == 0) {
+              account.shares.splice(i, 1);
+            }
+            account.balance += value;
+            // Add a transaction record for this purchase
+            trans = new Transaction({
+              _id: new mongoose.Types.ObjectId(),
+              share: req.body.symbol,
+              quantity: req.body.quantity,
+              price: price,
+              action: 'sell',
+              date: Date.now()
+            });
+            trans.save();
+            account.transactions.push(trans._id);
+            account.save();
+            return res.json({
+              message: 'Shares sold.',
+              account: account
+            });
+          } // if (account.shares[i].share.symbol == req.body.symbol)
+        } // for (var i = 0; i < account.shares.length; i++)
         return res.json({
-          message: 'Shares sold.',
-          account: account
+          message: 'This account does not have any shares in that symbol'
         });
-      }
-    }
-    return res.json({
-      message: 'This account does not have any shares in that symbol'
-    });
+      });
   });
 }
 
 exports.view = (req, res, next) => {
   Account.findById(req.params.accountId)
-  .populate('transactions')
-  .populate('shares')
-  .exec((err, account) => {
-    //if (err) return error(err, res)
-    if(!account) {
-      return res.json({
-        message: 'No account by that ID'
-      })
-    }
-    res.json(account)
-  })
+    .populate('transactions')
+    .populate('shares')
+    .exec((err, account) => {
+      //if (err) return error(err, res)
+      if(!account) {
+        return res.json({
+          message: 'No account by that ID'
+        })
+      }
+      res.json(account)
+    })
 }
 // vi: sw=2

@@ -7,7 +7,9 @@ const TransactionSchema = new Schema({
   quantity: { type: Number },
   price: { type: Number },
   action: { type: String },
-  brokerage: { type: Number }
+  brokerage: { type: Number },
+  date: {type: Date}
 })
 
 module.exports = mongoose.model('Transactions', TransactionSchema)
+// vi: sw=2
