@@ -73,6 +73,12 @@ function fetchPriceHistory(shareInfo) {
             + shareInfo.symbol);
           return;
         }
+        if (!res.data['Time Series (Daily)']) {
+          console.log('Response was missing time series!');
+          console.log('Response was:');
+          console.log(res.data);
+          return;
+        }
         //get the last 30 days
         const prices  = Object.values(res.data['Time Series (Daily)'])
         const dates  = Object.keys(res.data['Time Series (Daily)'])
@@ -132,6 +138,12 @@ function fetchPrice(shareInfo) {
         && res.data['Error Message'].includes('Invalid API call')) {
         console.log('Received API call complaint for symbol '
           + shareInfo.symbol);
+        return;
+      }
+      if (!res.data['Time Series (Daily)']) {
+        console.log('Response was missing time series!');
+        console.log('Response was:');
+        console.log(res.data);
         return;
       }
       // Turn the price series into an array
