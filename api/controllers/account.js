@@ -60,8 +60,6 @@ exports.buy = (req, res, next) => {
             message: 'No account by that ID'
           });
         }
-        console.log(account);
-        console.log(account.shares[0].symbol);
         if (account.balance < value) {
           return res.json({
             message: 'Insufficient funds'
@@ -132,20 +130,16 @@ exports.sell = (req, res, next) => {
             message: 'No account by that ID'
           });
         }
-        console.log(account.shares.length);
-        console.log(account.shares);
         for (var i = 0; i < account.shares.length; i++) {
-          console.log(account.shares[i].share);
-          console.log(account.shares[i].share.symbol);
           if (account.shares[i].share.symbol == req.body.symbol) {
             if (account.shares[i].share.quantity < req.body.quantity) {
               return res.json({
                 message: 'This account does not have that many shares'
               });
             }
-            account.shares[i].share.quantity -= req.body.quantity;
+            account.shares[i].quantity -= req.body.quantity;
             // if we sold the last shares, remove the share record
-            if (account.shares[i].share.quantity == 0) {
+            if (account.shares[i].quantity == 0) {
               account.shares.splice(i, 1);
             }
             account.balance += value;
@@ -160,6 +154,7 @@ exports.sell = (req, res, next) => {
             });
             trans.save();
             account.transactions.push(trans._id);
+            account.markModified('shares');
             account.save();
             return res.json({
               message: 'Shares sold.',
