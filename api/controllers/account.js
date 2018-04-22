@@ -38,14 +38,14 @@ exports.buy = (req, res, next) => {
   if (!req.body.accountId
     || !req.body.symbol
     || !req.body.quantity) {
-    return res.json({
+    return res.status(400).json({
       message: 'Bad request'
     });
   }
 
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
-      return res.json({
+      return res.status(409).json({
         message: 'Unrecognised symbol'
       });
     }
@@ -57,12 +57,12 @@ exports.buy = (req, res, next) => {
       .populate('shares.share')
       .exec((err, account) => {
         if (!account) {
-          return res.json({
+          return res.status(409).json({
             message: 'No account by that ID'
           });
         }
         if (account.balance < total) {
-          return res.json({
+          return res.status(409).json({
             message: 'Insufficient funds'
           });
         }
@@ -85,7 +85,7 @@ exports.buy = (req, res, next) => {
             found = true;
             account.shares[i].quantity += req.body.quantity;
             account.save()
-            return res.json({
+            return res.status(201).json({
               message: 'New share added to account',
               account: account
             });
@@ -97,7 +97,7 @@ exports.buy = (req, res, next) => {
           quantity: req.body.quantity
         });
         account.save();
-        return res.json({
+        return res.status(201).json({
           message: 'Shares purchased',
           account: account
         });
@@ -109,14 +109,14 @@ exports.sell = (req, res, next) => {
   if (!req.body.accountId
     || !req.body.symbol
     || !req.body.quantity) {
-    return res.json({
+    return res.status(400).json({
       message: 'Bad request'
     });
   }
 
   Share.findOne({symbol: req.body.symbol}).exec((err, share) => {
     if (!share) {
-      return res.json({
+      return res.status(409).json({
         message: 'Unrecognised symbol'
       });
     }
@@ -129,14 +129,14 @@ exports.sell = (req, res, next) => {
       .exec((err, account) => {
         if (err) console.log(err);
         if (!account) {
-          return res.json({
+          return res.status(409).json({
             message: 'No account by that ID'
           });
         }
         for (var i = 0; i < account.shares.length; i++) {
           if (account.shares[i].share.symbol == req.body.symbol) {
             if (account.shares[i].share.quantity < req.body.quantity) {
-              return res.json({
+              return res.status(409).json({
                 message: 'This account does not have that many shares'
               });
             }
@@ -160,7 +160,7 @@ exports.sell = (req, res, next) => {
             account.transactions.push(trans._id);
             account.markModified('shares');
             account.save();
-            return res.json({
+            return res.status(200).json({
               message: 'Shares sold.',
               account: account
             });
