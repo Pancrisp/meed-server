@@ -8,6 +8,7 @@ const userRoutes = require('./api/routes/user')
 const accountRoutes = require('./api/routes/account')
 const transactionRoutes = require('./api/routes/transaction')
 const shareRoutes = require('./api/routes/share')
+const leaderboardRoutes = require('./api/routes/leaderboard')
 
 mongoose.Promise = global.Promise
 // Connect to mLab database server
@@ -38,6 +39,7 @@ app.use('/users', userRoutes)
 app.use('/accounts', accountRoutes)
 app.use('/transactions', transactionRoutes)
 app.use('/shares', shareRoutes)
+app.use('/leaderboard',leaderboardRoutes)
 
 // TO BE REMOVED
 // Temporary handler to indicate endpoint is working
