@@ -31,12 +31,11 @@ exports.view = (req, res, next) => {
               for (let i = 0; i < user.accounts.length; i++) {
                 if (user.accounts[i].equals(account._id)
                   && account.transactions.length > 0) {
-                  let lbentry = {
+                  leaderboard.push({
                     user: user.name,
                     account: (i + 1),
                     networth: account.networth
-                  };
-                  leaderboard.push(lbentry);
+                  });
                 } 
               }
             });
