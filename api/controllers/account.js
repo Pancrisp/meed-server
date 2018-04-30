@@ -13,6 +13,7 @@ exports.createAccount = (req, res, next) => {
   User.findById(req.body.userId).exec((err, user) => {
     const account = new Account({
       _id: new mongoose.Types.ObjectId(),
+      name: req.body.name,
       balance: 1000000,
       networth: 1000000,
     })

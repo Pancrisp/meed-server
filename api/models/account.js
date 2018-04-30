@@ -5,6 +5,7 @@ const AccountSchema = new Schema({
   _id: Schema.Types.ObjectId,
   balance: { type: Number },
   networth: { type: Number },
+  name: {type: String},
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
   transactions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transactions' }],
   shares: [
