@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
-const passport = require('passport')
+const jwt = require('jsonwebtoken')
 
 const User = require('../models/user')
 
@@ -63,13 +63,52 @@ exports.signup = (req, res, next) => {
 }
 
 exports.login = (req, res, next) => {
-  if (!req.body.email) {
-    return res.json({
-      message: 'Bad request'
+  User.findOne({ email: req.body.email })
+    .exec()
+    .then(user => {
+      if (user.length < 1) {
+        return res.status(401).json({
+          message: "Authentication failed"
+        });
+      }
+
+      bcrypt.compare(req.body.password, user.password, (err, result) => {
+        if (err) {
+          return res.status(401).json({
+            message: "Authentication failed"
+          });
+        }
+
+        if (result) {
+          const token = jwt.sign(
+            {
+              email: user.email,
+              userId: user._id
+            },
+            process.env.JWT_SECRET_KEY,
+            {
+              expiresIn: "1h"
+            }
+          );
+          return res.status(200).json({
+            message: "Authentication successful",
+            token: token,
+            userId: user._id
+          });
+        }
+
+        res.status(401).json({
+          message: "Authentication failed"
+        });
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({
+        error: err
+      });
     });
-  }
-  User.find({ email: req.body.email })
-}
+};
 
 exports.delete = (req, res, next) => {
   User.remove({ _id: req.params.userId })
@@ -120,22 +159,6 @@ exports.update = (req, res, next) => {
       res.json(updatedUser)
     })
   })
-}
-
-exports.login = (req, res, next) => {
-  User.findOne({email: req.body.email})
-    .exec((err, user) => {
-      if (err) return error(err, res)
-      bcrypt.compare(req.body.password, user.password, (err, matched) => {
-        if (matched) {
-          res.json(user)
-        } else {
-          res.status(404).json({
-            message: 'Incorrect password'
-          })
-        }
-      })
-    })
 }
 
 // vi: sw=2
