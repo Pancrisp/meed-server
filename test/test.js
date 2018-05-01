@@ -5,8 +5,9 @@ const localUrl = 'http://localhost:5000';
 const remoteUrl = 'https://fierce-lake-99257.herokuapp.com';
 
 let testUserId = 0;
+let testAccountId = 0;
 
-describe('Users', function() {
+describe('User', function() {
   describe('signup', function() {
     it('should create a new user', function(done) {
       this.timeout(10000);
@@ -59,8 +60,27 @@ describe('Users', function() {
       });
     });
   });
-  describe('delete', function() {
-    it('should delete the new user', function(done) {
+});
+
+describe('Account', function() {
+  describe('create account', function() {
+    it('should create a new account for the test user', function(done) {
+      const url = localUrl + '/accounts';
+      axios.post(url, {
+        userId: testUserId
+      }).then(function(res) {
+        if (res.status == 201) {
+          testAccountId = res.data.account._id;
+          done();
+        }
+      });
+    });
+  });
+});
+
+describe('Cleanup', function() {
+  describe('delete user', function() {
+    it('should delete the test user', function(done) {
       this.timeout(10000);
       const url = localUrl + '/users/' + testUserId;
       axios.delete(url).then(function(res) {
