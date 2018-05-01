@@ -188,4 +188,31 @@ exports.view = (req, res, next) => {
       res.json(account)
     })
 }
+
+exports.delete = (req, res, next) => {
+  Account.remove({ _id: req.params.accountId }, function (err) {
+    if (err) {
+      return res.status(500).json({
+        message: 'Failed to delete account'
+      });
+    }
+    // remove the account from the User who had it
+    User.findOne({ accounts: req.params.accountId })
+      .then(function(user) {
+        if (!user) {
+          return res.status(500).json({
+            message: 'There was no user with that account'
+          });
+        }
+        const i = user.accounts.indexOf(req.params.accountId);
+        user.accounts.splice(i, 1);
+        user.save().then(function() {
+          return res.json({
+            message: 'Account deleted'
+          });
+        });
+      });
+  });
+};
+
 // vi: sw=2
