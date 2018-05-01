@@ -23,6 +23,42 @@ describe('Users', function() {
       });
     });
   });
+  describe('login', function() {
+    it('should login as the test user', function(done) {
+      this.timeout(10000);
+      const url = localUrl + '/users/login';
+      axios.post(url, {
+        email: 'test',
+        password: 'test'
+      }).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      });
+    });
+  });
+  describe('view', function() {
+    it('should retrieve the test user', function(done) {
+      this.timeout(10000);
+      const url = localUrl + '/users/' + testUserId;
+      axios.get(url).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      });
+    });
+  });
+  describe('viewAll', function() {
+    it('should retrieve all users', function(done) {
+      this.timeout(10000);
+      const url = localUrl + '/users';
+      axios.get(url).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      });
+    });
+  });
   describe('delete', function() {
     it('should delete the new user', function(done) {
       this.timeout(10000);
