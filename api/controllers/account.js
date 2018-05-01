@@ -22,18 +22,17 @@ exports.createAccount = (req, res, next) => {
         message: 'User not found'
       })
     }
-    account.save()
-    user.accounts.push(account._id)
-    user.save()
-      .then(result => {
-        console.log(result)
+    account.save().then(function() {
+      user.accounts.push(account._id)
+      user.save().then(function() {
         res.status(201).json({
           message: 'Account successfully created',
           account: account
-        })
-      })
-  })
-}
+        });
+      });
+    });
+  });
+};
 
 exports.buy = (req, res, next) => {
   if (!req.body.accountId
@@ -56,7 +55,7 @@ exports.buy = (req, res, next) => {
     const total = value + brokerage;
     Account.findById(req.body.accountId)
       .populate('shares.share')
-      .exec((err, account) => {
+      .then((account) => {
         if (!account) {
           return res.status(409).json({
             message: 'No account by that ID'
@@ -78,33 +77,41 @@ exports.buy = (req, res, next) => {
           action: 'buy',
           date: Date.now()
         });
-        trans.save();
-        account.transactions.push(trans._id);
-        // If we already have shares in this symbol
-        for (var i = 0; i < account.shares.length; i++) {
-          if (account.shares[i].share.symbol == req.body.symbol) {
-            found = true;
-            account.shares[i].quantity += req.body.quantity;
-            account.save()
+        trans.save().then(function() {
+          account.transactions.push(trans._id);
+          // If we already have shares in this symbol
+          for (var i = 0; i < account.shares.length; i++) {
+            if (account.shares[i].share.symbol == req.body.symbol) {
+              found = true;
+              account.shares[i].quantity += req.body.quantity;
+              return account.save().then(function() {
+                res.status(201).json({
+                  message: 'New share added to account',
+                  account: account
+                });
+              });
+            }
+          }
+          // If we could not find any existing shares in this symbol
+          account.shares.push({
+            share: share._id,
+            quantity: req.body.quantity
+          });
+          account.save().then(function() {
             return res.status(201).json({
-              message: 'New share added to account',
+              message: 'Shares purchased',
               account: account
             });
-          }
-        }
-        // If we could not find any existing shares in this symbol
-        account.shares.push({
-          share: share._id,
-          quantity: req.body.quantity
-        });
-        account.save();
-        return res.status(201).json({
-          message: 'Shares purchased',
-          account: account
+          }).catch(function(err) {
+            console.log(err);
+            res.status(500).json({
+              message: 'Error thrown when saving account'
+            });
+          });
         });
       });
   });
-}
+};
 
 exports.sell = (req, res, next) => {
   if (!req.body.accountId
@@ -157,13 +164,23 @@ exports.sell = (req, res, next) => {
               action: 'sell',
               date: Date.now()
             });
-            trans.save();
-            account.transactions.push(trans._id);
-            account.markModified('shares');
-            account.save();
-            return res.status(200).json({
-              message: 'Shares sold.',
-              account: account
+            return trans.save().then(function() {
+              account.transactions.push(trans._id);
+              account.markModified('shares');
+              return account.save().then(function() {
+                res.status(200).json({
+                  message: 'Shares sold.',
+                  account: account
+                });
+              }).catch(function(err) {
+                console.log('Error thrown when saving '
+                  + 'account after selling shares');
+                console.log(err);
+                res.status(500).json({
+                  message: 'Error when saving account',
+                  account: account
+                });
+              });
             });
           } // if (account.shares[i].share.symbol == req.body.symbol)
         } // for (var i = 0; i < account.shares.length; i++)
