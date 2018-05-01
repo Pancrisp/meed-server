@@ -79,6 +79,43 @@ describe('Account', function() {
   });
 });
 
+describe('Transaction', function() {
+  describe('buy share', function() {
+    it('should be able to buy a share', function(done) {
+      const url = localUrl + '/accounts/buy';
+      axios.post(url, {
+        accountId: testAccountId,
+        symbol: 'NAB',
+        quantity: 123
+      }).then(function(res) {
+        if (res.status == 201) {
+          done();
+        }
+      }).catch(function(err) {
+          console.log('Bad response:');
+          console.log(err);
+      });
+    });
+  });
+  describe('sell share', function() {
+    it('should be able to sell a share', function(done) {
+      const url = localUrl + '/accounts/sell';
+      axios.post(url, {
+        accountId: testAccountId,
+        symbol: 'NAB',
+        quantity: 123
+      }).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      }).catch(function(err) {
+          console.log('Bad response:');
+          console.log(err);
+      });
+    });
+  });
+});
+      
 describe('Cleanup', function() {
   describe('delete account', function() {
     it("should delete the test user's account", function(done) {
