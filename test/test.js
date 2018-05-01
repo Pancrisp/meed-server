@@ -13,9 +13,9 @@ describe('User', function() {
       this.timeout(10000);
       const url = localUrl + '/users/signup';
       axios.post(url, {
-        name: 'test',
-        email: 'test',
-        password: 'test'
+        name: 'TEST',
+        email: 'TEST',
+        password: 'TEST'
       }).then(function(res) {
         if (res.status == 201) {
           testUserId = res.data.user._id;
@@ -29,8 +29,8 @@ describe('User', function() {
       this.timeout(10000);
       const url = localUrl + '/users/login';
       axios.post(url, {
-        email: 'test',
-        password: 'test'
+        email: 'TEST',
+        password: 'TEST'
       }).then(function(res) {
         if (res.status == 200) {
           done();
@@ -67,7 +67,8 @@ describe('Account', function() {
     it('should create a new account for the test user', function(done) {
       const url = localUrl + '/accounts';
       axios.post(url, {
-        userId: testUserId
+        userId: testUserId,
+        name: 'TEST'
       }).then(function(res) {
         if (res.status == 201) {
           testAccountId = res.data.account._id;
@@ -79,6 +80,17 @@ describe('Account', function() {
 });
 
 describe('Cleanup', function() {
+  describe('delete account', function() {
+    it("should delete the test user's account", function(done) {
+      this.timeout(10000);
+      const url = localUrl + '/accounts/' + testAccountId;
+      axios.delete(url).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      });
+    });
+  });
   describe('delete user', function() {
     it('should delete the test user', function(done) {
       this.timeout(10000);
