@@ -33,7 +33,7 @@ exports.view = (req, res, next) => {
                   && account.transactions.length > 0) {
                   leaderboard.push({
                     user: user.name,
-                    account: (i + 1),
+                    account: account.name,
                     networth: account.networth
                   });
                 } 
