@@ -25,7 +25,7 @@ exports.sendEmail = (req, res, next) => {
     PasswordReset.remove({userEmail: userEmail}, function(err) {
       if (err) return handleError(err);
     });
-    const token = jwt.sign(userEmail, process.env.JWT_SECRET_KEY);
+    const token = jwt.sign({data:userEmail}, process.env.JWT_SECRET_KEY, {expiresIn: '60'});
     const reset = new PasswordReset({
       _id: new mongoose.Types.ObjectId(),
       requestd: Date.now(),
@@ -60,12 +60,17 @@ exports.resetPassword = async (req, res, next) => {
   }
 
   //check token against database
-  if(resetRecord.token != req.body.token) {
+  try {
+    jwt.verify(req.body.token,process.env.JWT_SECRET_KEY);
+
+    if(resetRecord.token != req.body.token) {
+      throw "Token not found";
+    }
+  } catch (err) {
     return res.status(404).json({
-      message: 'Token does not match'
+      message: 'Token not valid'
     });
   }
-
   //reset password if match
   userFound = await User.findOne({email:req.body.email});
 
