@@ -6,8 +6,9 @@ const remoteUrl = 'https://fierce-lake-99257.herokuapp.com';
 
 let testUserId = 0;
 let testAccountId = 0;
+let token = 0;
 
-// This is bad, it just for testing race conditions
+// This is bad, it's just for testing race conditions
 function busySleep(ms) {
   const start = Date.now();
   while (Date.now() - start < ms) {
@@ -41,6 +42,7 @@ describe('User', function() {
         password: 'TEST'
       }).then(function(res) {
         if (res.status == 200) {
+          token = res.data.token;
           done();
         }
       });
@@ -76,6 +78,7 @@ describe('Account', function() {
     it('should create a new account for the test user', function(done) {
       const url = localUrl + '/accounts';
       axios.post(url, {
+        token: token,
         userId: testUserId,
         name: 'TEST'
       }).then(function(res) {
@@ -94,6 +97,7 @@ describe('Transaction', function() {
       this.timeout(10000);
       const url = localUrl + '/accounts/buy';
       axios.post(url, {
+        token: token,
         accountId: testAccountId,
         symbol: 'NAB',
         quantity: 123
@@ -112,6 +116,7 @@ describe('Transaction', function() {
       this.timeout(10000);
       const url = localUrl + '/accounts/sell';
       axios.post(url, {
+        token: token,
         accountId: testAccountId,
         symbol: 'NAB',
         quantity: 123

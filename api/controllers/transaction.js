@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const Transaction = require('../models/transaction')
 
-exports.createAccount = (req, res, next) => {
+exports.createAccount = async (req, res, next) => {
   if (!req.body.share
     || !req.body.quantity
     || !req.body.price
@@ -17,12 +17,9 @@ exports.createAccount = (req, res, next) => {
     price: req.body.price,
     action: req.body.action
   })
-  account.save()
-  .then(result => {
-    console.log(result)
-    res.status(201).json({
-      message: 'Transaction successfully created',
-      user: user
-    })
-  })
+  await account.save();
+  res.status(201).json({
+    message: 'Transaction successfully created',
+    user: user
+  });
 }

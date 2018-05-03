@@ -9,22 +9,21 @@ const PasswordReset = require('../models/passwordReset')
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-exports.sendEmail = (req, res, next) => {
+exports.sendEmail = async (req, res, next) => {
   if (!req.body.email) {
     return res.status(404).json({
       message: 'Bad request'
     });
   }
   const userEmail = req.body.email;
-  User.findOne({email: userEmail}).then(function(user) {
+  try {
+    const user = await User.findOne({email: userEmail});
     if (!user) {
       return res.status(404).json({
         message: 'No user with that email'
       });
     }
-    PasswordReset.remove({userEmail: userEmail}, function(err) {
-      if (err) return handleError(err);
-    });
+    await PasswordReset.remove({userEmail: userEmail});
     const token = jwt.sign({data:userEmail}, process.env.JWT_SECRET_KEY, {expiresIn: '60'});
     const reset = new PasswordReset({
       _id: new mongoose.Types.ObjectId(),
@@ -32,23 +31,28 @@ exports.sendEmail = (req, res, next) => {
       userEmail: userEmail,
       token: token
     });
-    reset.save().then(function() {
-      const resetUrl = 'https://www.frontend.com/password_reset?email='
-        + userEmail + '&token=' + token;
-      // email the user and respond OK
-      const msg = {
-        to: userEmail,
-        from: 'noreply@meed.com',
-        subject: 'Password Reset',
-        text: 'Please click on the following link to reset your password: ' +resetUrl,
-      };
-      sgMail.send(msg);
-      res.json({
-        message: "Email sent"
-      });
+    await reset.save();
+    const resetUrl = 'https://www.frontend.com/password_reset?email='
+      + userEmail + '&token=' + token;
+    // email the user and respond OK
+    const msg = {
+      to: userEmail,
+      from: 'noreply@meed.com',
+      subject: 'Password Reset',
+      text: 'Please click on the following link to reset your password: ' +resetUrl,
+    };
+    sgMail.send(msg);
+    res.json({
+      message: "Email sent"
     });
-  });
-};
+  } catch (err) {
+    const msg = 'Error thrown while sending password reset email';
+    console.log(msg);
+    return res.status(500).json({
+      message: msg
+    });
+  }
+}
 
 exports.resetPassword = async (req, res, next) => {
   resetRecord = await PasswordReset.findOne({userEmail:req.body.email});

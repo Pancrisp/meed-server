@@ -8,7 +8,7 @@ const Share = require('./api/models/share');
 mongoose.Promise = global.Promise
 // Connect to mLab database server
 mongoose.connect(`mongodb://${process.env.MLAB_USER}:${process.env.MLAB_PASS}@ds123619.mlab.com:23619/meed`)
-//mongoose.connect(`mongodb://localhost/meed`)
+  //mongoose.connect(`mongodb://localhost/meed`)
 
 const lines = fs.readFileSync('symbols.csv').toString().split('\n');
 let shareList = [];
@@ -55,56 +55,55 @@ function fetchAllPriceHistory(shareList) {
   }
 }
 
-function fetchPriceHistory(shareInfo) {
+async function fetchPriceHistory(shareInfo) {
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_DAILY&symbol='
     + shareInfo.symbol + '.AX&apikey='
     + process.env.APIKEY;
 
-    return axios.get(url)
-      .then((res) => {
-        if (res.data.Information
-          && res.data.Information.includes('call frequency')) {
-          console.log('Caught call frequency complaint, trying again')
-          return fetchPriceHistory(shareInfo);
-        } else if (res.data['Error Message']
-          && res.data['Error Message'].includes('Invalid API call')) {
-          console.log('Received API call complaint for symbol '
-            + shareInfo.symbol);
-          return;
-        }
-        if (!res.data['Time Series (Daily)']) {
-          console.log('Response was missing time series!');
-          console.log('Response was:');
-          console.log(res.data);
-          return;
-        }
-        //get the last 30 days
-        const prices  = Object.values(res.data['Time Series (Daily)'])
-        const dates  = Object.keys(res.data['Time Series (Daily)'])
-        const numberOfDays = 30;
+  try {
+    res = await axios.get(url)
+    if (res.data.Information
+      && res.data.Information.includes('call frequency')) {
+      console.log('Caught call frequency complaint, trying again')
+      return fetchPriceHistory(shareInfo);
+    } else if (res.data['Error Message']
+      && res.data['Error Message'].includes('Invalid API call')) {
+      console.log('Received API call complaint for symbol '
+        + shareInfo.symbol);
+      return;
+    }
+    if (!res.data['Time Series (Daily)']) {
+      console.log('Response was missing time series!');
+      console.log('Response was:');
+      console.log(res.data);
+      return;
+    }
+    //get the last 30 days
+    const prices  = Object.values(res.data['Time Series (Daily)'])
+    const dates  = Object.keys(res.data['Time Series (Daily)'])
+    const numberOfDays = 30;
 
-        priceArray = []
-        //access 30 days
-        for(i=0;i<=numberOfDays;i++) {
-          const closingPrice = prices[i]['4. close']
-          const priceDate = dates[i];
-          const date = new Date(priceDate);
-          priceArray.push({date: date, price: closingPrice});
-        }
-        uploadShareHistory(priceArray,shareInfo);
-      })
-      .catch((err) => {
-        if (err.response && err.response.status
-          && err.response.status == 503) {
-          console.log('Server responds 503: Service unavailable.\nRetrying...');
-          return fetchPrice(shareInfo);
-        }
-        console.log('Exception thrown while fetching prices:');
-        console.log(err);
-        console.log('Response from server was:');
-        console.log(err.response);
-      });
+    priceArray = []
+    //access 30 days
+    for(i=0;i<=numberOfDays;i++) {
+      const closingPrice = prices[i]['4. close']
+      const priceDate = dates[i];
+      const date = new Date(priceDate);
+      priceArray.push({date: date, price: closingPrice});
+    }
+    uploadShareHistory(priceArray,shareInfo);
+  } catch(err) {
+    if (err.response && err.response.status
+      && err.response.status == 503) {
+      console.log('Server responds 503: Service unavailable.\nRetrying...');
+      return fetchPrice(shareInfo);
+    }
+    console.log('Exception thrown while fetching prices:');
+    console.log(err);
+    console.log('Response from server was:');
+    console.log(err.response);
+  }
 }
 
 function uploadShareHistory(priceArray,shareInfo) {
@@ -122,47 +121,46 @@ function uploadShareHistory(priceArray,shareInfo) {
   });
 }
 
-function fetchPrice(shareInfo) {
+async function fetchPrice(shareInfo) {
   const url = 'https://www.alphavantage.co/'
     + 'query?function=TIME_SERIES_INTRADAY&symbol='
     + shareInfo.symbol + '.AX&interval=1min&apikey='
     + process.env.APIKEY;
 
-  return axios.get(url)
-    .then((res) => {
-      if (res.data.Information
-        && res.data.Information.includes('call frequency')) {
-        console.log('Caught call frequency complaint, trying again')
-        return fetchPrice(shareInfo);
-      } else if (res.data['Error Message']
-        && res.data['Error Message'].includes('Invalid API call')) {
-        console.log('Received API call complaint for symbol '
-          + shareInfo.symbol);
-        return;
-      }
-      if (!res.data['Time Series (Daily)']) {
-        console.log('Response was missing time series!');
-        console.log('Response was:');
-        console.log(res.data);
-        return;
-      }
-      // Turn the price series into an array
-      const prices = Object.values(res.data['Time Series (1min)'])
-      // Use the latest closing price
-      const newPrice = prices[0]['4. close'];
-      uploadSharePrice(newPrice, shareInfo);
-    })
-    .catch((err) => {
-      if (err.response && err.response.status
-        && err.response.status == 503) {
-        console.log('Server responds 503: Service unavailable.\nRetrying...');
-        return fetchPrice(shareInfo);
-      }
-      console.log('Exception thrown while fetching prices:');
-      console.log(err);
-      console.log('Response from server was:');
-      console.log(err.response);
-    });
+  try {
+    res = await axios.get(url)
+    if (res.data.Information
+      && res.data.Information.includes('call frequency')) {
+      console.log('Caught call frequency complaint, trying again')
+      return fetchPrice(shareInfo);
+    } else if (res.data['Error Message']
+      && res.data['Error Message'].includes('Invalid API call')) {
+      console.log('Received API call complaint for symbol '
+        + shareInfo.symbol);
+      return;
+    }
+    if (!res.data['Time Series (Daily)']) {
+      console.log('Response was missing time series!');
+      console.log('Response was:');
+      console.log(res.data);
+      return;
+    }
+    // Turn the price series into an array
+    const prices = Object.values(res.data['Time Series (1min)'])
+    // Use the latest closing price
+    const newPrice = prices[0]['4. close'];
+    uploadSharePrice(newPrice, shareInfo);
+  } catch(err) {
+    if (err.response && err.response.status
+      && err.response.status == 503) {
+      console.log('Server responds 503: Service unavailable.\nRetrying...');
+      return fetchPrice(shareInfo);
+    }
+    console.log('Exception thrown while fetching prices:');
+    console.log(err);
+    console.log('Response from server was:');
+    console.log(err.response);
+  }
 }
 
 function uploadSharePrice(price, shareInfo) {
@@ -189,7 +187,6 @@ function uploadSharePrice(price, shareInfo) {
       }
     }
   });
-
 }
 
 // vi: sw=2

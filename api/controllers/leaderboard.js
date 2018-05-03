@@ -11,40 +11,29 @@ function leaderboardCompare(a, b) {
   return 0;
 }
 
-exports.view = (req, res, next) => {
-  let userArray = [];
-  let accountArray = [];
+exports.view = async (req, res, next) => {
   let leaderboard = [];
 
-  User.find()
-    .then(function(users) {
-      userArray = users;
-    })
-    .then(function() {
-      Account.find()
-        .then(function(accounts) {
-          accountArray = accounts;
-        })
-        .then(function() {
-          userArray.forEach(function(user) {
-            accountArray.forEach(function(account) {
-              for (let i = 0; i < user.accounts.length; i++) {
-                if (user.accounts[i].equals(account._id)
-                  && account.transactions.length > 0) {
-                  leaderboard.push({
-                    user: user.name,
-                    account: account.name,
-                    networth: account.networth
-                  });
-                } 
-              }
-            });
+  const users = await User.find();
+  const accounts = await Account.find();
+  users.forEach(function(user) {
+    accounts.forEach(function(account) {
+      for (let i = 0; i < user.accounts.length; i++) {
+        if (user.accounts[i].equals(account._id)
+          && account.transactions.length > 0) {
+          leaderboard.push({
+            user: user.name,
+            account: account.name,
+            networth: account.networth
           });
-          leaderboard.sort(leaderboardCompare);
-          // remove all but the first 10 elements
-          leaderboard.splice(10);
-          res.json({leaderboard: leaderboard});
-        });
+        } 
+      }
     });
+  });
+  leaderboard.sort(leaderboardCompare);
+  // remove all but the first 10 elements
+  leaderboard.splice(10);
+  return res.json({leaderboard: leaderboard});
 }
 
+// vi: sw=2
