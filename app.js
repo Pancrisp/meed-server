@@ -3,7 +3,6 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const morgan = require('morgan')
 const env = require('dotenv').config()
-const jwt = require('jsonwebtoken')
 
 const userRoutes = require('./api/routes/user')
 const accountRoutes = require('./api/routes/account')
