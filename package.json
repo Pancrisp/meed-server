@@ -1,20 +1,33 @@
 {
   "name": "meed-server",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Server side application for MEED",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "start": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "node",
+    "express",
+    "api",
+    "reza will gib gud marks"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
+    "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
+    "dotenv": "^5.0.1",
     "express": "^4.16.3",
-    "mongoose": "^5.0.11"
+    "jsonwebtoken": "^8.2.1",
+    "mocha": "^5.1.1",
+    "mongoose": "^5.0.17",
+    "morgan": "^1.9.0"
   },
   "devDependencies": {
-    "nodemon": "^1.17.2"
+    "nodemon": "^1.17.3",
+    "standard": "^11.0.1"
   }
 }
