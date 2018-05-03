@@ -208,11 +208,6 @@ exports.view = async (req, res, next) => {
 exports.delete = async (req, res, next) => {
   try {
     await Account.remove({ _id: req.params.accountId });
-    if (err) {
-      return res.status(500).json({
-        message: 'Failed to delete account'
-      });
-    }
     // remove the account from the User who had it
     const user = await User.findOne({ accounts: req.params.accountId });
     if (!user) {
