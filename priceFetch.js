@@ -4,6 +4,7 @@ const fs = require('fs');
 const env = require('dotenv').config()
 
 const Share = require('./api/models/share');
+const Account = require('./api/models/account');
 
 mongoose.Promise = global.Promise
 // Connect to mLab database server
@@ -26,32 +27,70 @@ lines.forEach((line) => {
 console.log('Loaded ' + shareList.length + ' symbols.');
 
 console.log('Fetching prices...');
-fetchAllPrices(shareList).then(() => {
-  fetchAllPriceHistory(shareList);
-});
-
-// fetchAllPriceHistory(shareList);
+fetchAllPrices(shareList)
+  .then(() => {
+    return updateNetWorth();
+  }).then(() => {
+    return fetchAllPriceHistory(shareList);
+  }).then(() => {
+    console.log('Finished updating');
+  });
 
 //get lastest prices
-function fetchAllPrices(shareList) {
-  // Build a chain of promises
-  let chain = Promise.resolve();
+async function fetchAllPrices(shareList) {
   for (let i = 0; i < shareList.length; i++) {
-    chain = chain.then(() => {
-      return fetchPrice(shareList[i]);
-    });
+    await fetchPrice(shareList[i]);
   }
-  return chain;
+  return Promise.resolve();
 }
 
 //get price history
-function fetchAllPriceHistory(shareList) {
-  // Build a chain of promises
-  let chain = Promise.resolve();
+async function fetchAllPriceHistory(shareList) {
   for (let i = 0; i < shareList.length; i++) {
-    chain = chain.then(() => {
-      return fetchPriceHistory(shareList[i]);
-    });
+    await fetchPriceHistory(shareList[i]);
+  }
+  return Promise.resolve();
+}
+
+async function fetchPrice(shareInfo) {
+  const url = 'https://www.alphavantage.co/'
+    + 'query?function=TIME_SERIES_INTRADAY&symbol='
+    + shareInfo.symbol + '.AX&interval=1min&apikey='
+    + process.env.APIKEY;
+
+  try {
+    res = await axios.get(url)
+    if (res.data.Information
+      && res.data.Information.includes('call frequency')) {
+      console.log('Caught call frequency complaint, trying again')
+      return fetchPrice(shareInfo);
+    } else if (res.data['Error Message']
+      && res.data['Error Message'].includes('Invalid API call')) {
+      console.log('Received API call complaint for symbol '
+        + shareInfo.symbol);
+      return;
+    }
+    if (!res.data['Time Series (1min)']) {
+      console.log('Response was missing time series!');
+      console.log('Response was:');
+      console.log(res.data);
+      return;
+    }
+    // Turn the price series into an array
+    const prices = Object.values(res.data['Time Series (1min)'])
+    // Use the latest closing price
+    const newPrice = prices[0]['4. close'];
+    uploadSharePrice(newPrice, shareInfo);
+  } catch(err) {
+    if (err.response && err.response.status
+      && err.response.status == 503) {
+      console.log('Server responds 503: Service unavailable.\nRetrying...');
+      return fetchPrice(shareInfo);
+    }
+    console.log('Exception thrown while fetching prices:');
+    console.log(err);
+    console.log('Response from server was:');
+    console.log(err.response);
   }
 }
 
@@ -110,57 +149,15 @@ function uploadShareHistory(priceArray,shareInfo) {
   Share.findOne({symbol: shareInfo.symbol}, (err, share) => {
     if (err) throw err;
     if (!share) {
-      console.log("No share price history")
+      console.log("Could not find share " + shareInfo.symbol + " in database")
       return;
     } else {
       //add share priceHistory
       share.priceHistory = priceArray;
       share.save();
-      console.log("Updated price history for share" + shareInfo.symbol);
+      console.log("Updated price history for share " + shareInfo.symbol);
     }
   });
-}
-
-async function fetchPrice(shareInfo) {
-  const url = 'https://www.alphavantage.co/'
-    + 'query?function=TIME_SERIES_INTRADAY&symbol='
-    + shareInfo.symbol + '.AX&interval=1min&apikey='
-    + process.env.APIKEY;
-
-  try {
-    res = await axios.get(url)
-    if (res.data.Information
-      && res.data.Information.includes('call frequency')) {
-      console.log('Caught call frequency complaint, trying again')
-      return fetchPrice(shareInfo);
-    } else if (res.data['Error Message']
-      && res.data['Error Message'].includes('Invalid API call')) {
-      console.log('Received API call complaint for symbol '
-        + shareInfo.symbol);
-      return;
-    }
-    if (!res.data['Time Series (Daily)']) {
-      console.log('Response was missing time series!');
-      console.log('Response was:');
-      console.log(res.data);
-      return;
-    }
-    // Turn the price series into an array
-    const prices = Object.values(res.data['Time Series (1min)'])
-    // Use the latest closing price
-    const newPrice = prices[0]['4. close'];
-    uploadSharePrice(newPrice, shareInfo);
-  } catch(err) {
-    if (err.response && err.response.status
-      && err.response.status == 503) {
-      console.log('Server responds 503: Service unavailable.\nRetrying...');
-      return fetchPrice(shareInfo);
-    }
-    console.log('Exception thrown while fetching prices:');
-    console.log(err);
-    console.log('Response from server was:');
-    console.log(err.response);
-  }
 }
 
 function uploadSharePrice(price, shareInfo) {
@@ -187,6 +184,22 @@ function uploadSharePrice(price, shareInfo) {
       }
     }
   });
+}
+
+async function updateNetWorth() {
+  console.log('Updating net worths...');
+  const accounts = await Account.find().populate('shares.share');
+  accounts.forEach(function(account) {
+    console.log('Account ' + account.name + ' net worth was ' + account.networth);
+    let networth = account.balance;
+    account.shares.forEach(function({share, quantity}) {
+      networth += share.price * quantity;
+    });
+    account.networth = networth;
+    console.log('now ' + account.networth);
+    account.save();
+  });
+  return Promise.resolve();
 }
 
 // vi: sw=2
