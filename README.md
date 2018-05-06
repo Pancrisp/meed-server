@@ -26,3 +26,4 @@ $ npm start # server at http://localhost:5000
 **Morgan** will log HTTP requests into console.
 
 ## Deployment
+Automatic deploys are set up on Heroku. Any new commits pushed to `dev` branch will trigger the build process.
