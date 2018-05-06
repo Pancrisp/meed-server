@@ -89,6 +89,17 @@ describe('Account', function() {
       });
     });
   });
+  describe('view account', function() {
+    this.timeout(10000);
+    it('should return the new account', function(done) {
+      const url = localUrl + '/accounts/' + testAccountId;
+      axios.get(url).then(function(res) {
+        if (res.status == 200) {
+          done();
+        }
+      });
+    });
+  });
 });
 
 describe('Transaction', function() {

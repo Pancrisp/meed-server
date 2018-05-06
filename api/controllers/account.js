@@ -189,7 +189,8 @@ exports.sell = async (req, res, next) => {
 
 exports.view = async (req, res, next) => {
   try {
-    await Account.findById(req.params.accountId).populate('transactions').populate('shares.share');
+    const account = await Account.findById(req.params.accountId)
+      .populate('transactions').populate('shares.share');
     if(!account) {
       return res.json({
         message: 'No account by that ID'
@@ -199,6 +200,7 @@ exports.view = async (req, res, next) => {
   } catch (err) {
     const msg = 'Error thrown when viewing account';
     console.log(msg);
+    console.log(err);
     return res.status(500).json({
       message: msg
     });
