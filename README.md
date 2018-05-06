@@ -11,8 +11,10 @@ $ npm install
 
 Create a copy of `.env.example` and rename it to `.env` and fill in the username and password fields with the database credentials.
 ```
-MLAB_USER={username}
-MLAB_PASS={password}
+MLAB_USER=
+MLAB_PASS=
+JWT_SECRET_KEY=
+API_KEY=
 ```
 
 To start server, run:
