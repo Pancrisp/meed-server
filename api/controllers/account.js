@@ -4,6 +4,18 @@ const User = require('../models/user')
 const Share = require('../models/share')
 const Transaction = require('../models/transaction')
 
+async function updateRecentActivity(userId) {
+  console.log("updateRecentActivity:");
+  console.log("userId:");
+  console.log(userId);
+  const user = await User.findById(userId);
+  if (!user) {
+    throw "Updating recent activity: No user with that ID";
+  }
+  user.mostRecentActivity = Date.now();
+  return user.save();
+}
+
 exports.createAccount = async (req, res, next) => {
   if (!req.body.userId) {
     return res.json({
@@ -22,6 +34,7 @@ exports.createAccount = async (req, res, next) => {
       name: req.body.name,
       balance: 1000000,
       networth: 1000000,
+      user: req.body.userId
     });
     await account.save();
     user.accounts.push(account._id);
@@ -85,6 +98,8 @@ exports.buy = async (req, res, next) => {
     });
     await trans.save();
     account.transactions.push(trans._id);
+    // Update the most recent activity
+    updateRecentActivity(account.user);
     // If we already have shares in this symbol
     for (var i = 0; i < account.shares.length; i++) {
       if (account.shares[i].share.symbol == req.body.symbol) {
@@ -168,6 +183,8 @@ exports.sell = async (req, res, next) => {
         account.transactions.push(trans._id);
         account.markModified('shares');
         await account.save();
+        // Update the most recent activity
+        updateRecentActivity(account.user);
         return res.status(200).json({
           message: 'Shares sold.',
           account: account
