@@ -1,6 +1,10 @@
 const assert = require('assert');
 const axios = require('axios');
 
+const mongoose = require('mongoose')
+const env = require('dotenv').config()
+const User = require('../api/models/user.js');
+
 const localUrl = 'http://localhost:5000';
 const remoteUrl = 'https://fierce-lake-99257.herokuapp.com';
 
@@ -17,6 +21,15 @@ function busySleep(ms) {
 }
 
 describe('User', function() {
+  describe('setup', function() {
+    it('should delete any existing user with email TEST', function(done) {
+      this.timeout(10000);
+      mongoose.connect(`mongodb://${process.env.MLAB_USER}:${process.env.MLAB_PASS}@ds123619.mlab.com:23619/meed`)
+        User.remove({email: 'TEST'}).then(function() {
+          done();
+        });
+    });
+  });
   describe('signup', function() {
     it('should create a new user', function(done) {
       this.timeout(10000);
@@ -164,6 +177,12 @@ describe('Cleanup', function() {
           done();
         }
       });
+    });
+  });
+  describe('disconnect from database', function() {
+    it('should disconnect from the database so node will close', function() {
+      this.timeout(10000);
+      mongoose.disconnect();
     });
   });
 });
