@@ -17,14 +17,14 @@ exports.sendEmail = async (req, res, next) => {
   }
   const userEmail = req.body.email;
   try {
-    const user = await User.findOne({email: userEmail});
+    const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(404).json({
         message: 'No user with that email'
       });
     }
-    await PasswordReset.remove({userEmail: userEmail});
-    const token = jwt.sign({data:userEmail}, process.env.JWT_SECRET_KEY, {expiresIn: '60'});
+    await PasswordReset.remove({ userEmail: userEmail });
+    const token = jwt.sign({ data: userEmail }, process.env.JWT_SECRET_KEY, { expiresIn: '60' });
     const reset = new PasswordReset({
       _id: new mongoose.Types.ObjectId(),
       requestd: Date.now(),
@@ -32,14 +32,14 @@ exports.sendEmail = async (req, res, next) => {
       token: token
     });
     await reset.save();
-    const resetUrl = 'https://www.frontend.com/password_reset?email='
+    const resetUrl = 'https://meed.netlify.com/password_reset?email='
       + userEmail + '&token=' + token;
     // email the user and respond OK
     const msg = {
       to: userEmail,
       from: 'noreply@meed.com',
       subject: 'Password Reset',
-      text: 'Please click on the following link to reset your password: ' +resetUrl,
+      text: 'Please click on the following link to reset your password: ' + resetUrl,
     };
     sgMail.send(msg);
     res.json({
@@ -55,9 +55,9 @@ exports.sendEmail = async (req, res, next) => {
 }
 
 exports.resetPassword = async (req, res, next) => {
-  resetRecord = await PasswordReset.findOne({userEmail:req.body.email});
+  resetRecord = await PasswordReset.findOne({ userEmail: req.body.email });
 
-  if(!resetRecord) {
+  if (!resetRecord) {
     return res.status(404).json({
       message: 'No password reset request for this user'
     });
@@ -65,9 +65,9 @@ exports.resetPassword = async (req, res, next) => {
 
   //check token against database
   try {
-    jwt.verify(req.body.token,process.env.JWT_SECRET_KEY);
+    jwt.verify(req.body.token, process.env.JWT_SECRET_KEY);
 
-    if(resetRecord.token != req.body.token) {
+    if (resetRecord.token != req.body.token) {
       throw "Token not found";
     }
   } catch (err) {
@@ -76,9 +76,9 @@ exports.resetPassword = async (req, res, next) => {
     });
   }
   //reset password if match
-  userFound = await User.findOne({email:req.body.email});
+  userFound = await User.findOne({ email: req.body.email });
 
-  if(!userFound) {
+  if (!userFound) {
     return res.status(404).json({
       message: 'User not found'
     });
